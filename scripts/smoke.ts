@@ -130,6 +130,37 @@ if (full) {
       const r = await call('POST', `/api/workspaces/${secondId}/restore`, {});
       expect(r.status === 200, `restore ${r.status}`);
     });
+    await check('M1: project, page, rev-checked save, search, trash and restore', async () => {
+      const W = `/api/workspaces/${wsId}`;
+      const p = await call('POST', `${W}/projects`, { name: 'Smoke project' });
+      expect(p.status === 201, `project ${p.status}`);
+      const pg = await call('POST', `${W}/pages`, { projectId: p.json.project.id, type: 'doc', title: 'Smoke page' });
+      expect(pg.status === 201, `page ${pg.status}`);
+      const id = pg.json.page.id;
+      const content = [{ type: 'paragraph', content: [{ type: 'text', text: 'Zanzibar quokka smoke', styles: {} }] }];
+      const saved = await call('PUT', `${W}/pages/${id}/content`, { rev: 0, content });
+      expect(saved.status === 200 && saved.json.rev === 1, `save ${saved.status} ${saved.text.slice(0, 120)}`);
+      const stale = await call('PUT', `${W}/pages/${id}/content`, { rev: 0, content });
+      expect(stale.status === 409, `stale save ${stale.status}`);
+      const hits = await call('GET', `${W}/search?q=quokk`);
+      expect(hits.json.results?.[0]?.id === id, `search ${JSON.stringify(hits.json).slice(0, 120)}`);
+      const t = await call('POST', `${W}/trash`, { kind: 'page', id });
+      expect(t.status === 200, `trash ${t.status}`);
+      expect((await call('GET', `${W}/search?q=quokka`)).json.results.length === 0, 'trashed page still in search');
+      const r = await call('POST', `${W}/trash/restore`, { kind: 'page', id });
+      expect(r.status === 200, `restore ${r.status}`);
+    });
+    await check('M1: upload, sniffed type, sandboxed serve', async () => {
+      const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+      const form = new FormData();
+      form.append('file', new Blob([png], { type: 'text/plain' }), 'pixel.txt');
+      const up = await fetch(`${base}/api/workspaces/${wsId}/files`, { method: 'POST', body: form, headers: { origin: base!, cookie } });
+      const json = (await up.json()) as { file?: { url: string; mime: string } };
+      expect(up.status === 201 && json.file?.mime === 'image/png', `upload ${up.status} ${JSON.stringify(json).slice(0, 120)}`);
+      const got = await fetch(base + json.file!.url, { headers: { cookie } });
+      expect(got.status === 200 && (got.headers.get('content-security-policy') ?? '').includes('sandbox'), `serve ${got.status}`);
+      return `mime=${json.file!.mime}`;
+    });
     await check('storage adapter round trip', async () => {
       const r = await call('POST', '/api/selftest/storage', {});
       expect(r.status === 200 && r.json.ok, JSON.stringify(r.json));

@@ -1,6 +1,7 @@
 -- Empties a Notey database but keeps the schema and migration history, so the
 -- next visit shows /setup again. Used after `pnpm smoke <url> --full`.
 -- Cloudflare: wrangler d1 execute notey --remote --file scripts/reset-instance.sql
+DELETE FROM search_fts;
 DELETE FROM change_log;
 DELETE FROM ai_message;
 DELETE FROM ai_grant;
