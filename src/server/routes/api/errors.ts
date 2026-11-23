@@ -11,12 +11,18 @@ const STATUS: Record<ServiceErrorCode, ContentfulStatusCode> = {
   conflict: 409,
 };
 
-export function errorJson(c: Context, code: string, message: string, status: ContentfulStatusCode) {
-  return c.json({ error: { code, message } }, status);
+export function errorJson(
+  c: Context,
+  code: string,
+  message: string,
+  status: ContentfulStatusCode,
+  details?: Record<string, unknown>,
+) {
+  return c.json({ error: { code, message, ...(details ? { details } : {}) } }, status);
 }
 
 export function onError(err: Error, c: Context) {
-  if (err instanceof ServiceError) return errorJson(c, err.code, err.message, STATUS[err.code]);
+  if (err instanceof ServiceError) return errorJson(c, err.code, err.message, STATUS[err.code], err.details);
   if (err instanceof HTTPException) {
     const status = err.status as ContentfulStatusCode;
     return errorJson(c, status === 403 ? 'forbidden' : 'http_error', err.message || 'Request rejected', status);

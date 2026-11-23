@@ -6,6 +6,7 @@ import type { AppEnv, Deps } from '../../hono-env';
 import { needsSetup, runSetup } from '../../services/setup';
 import { errorJson, validationHook } from './errors';
 import { requireUser } from './middleware';
+import { contentRoutes } from './content';
 import { workspaceRoutes } from './workspaces';
 
 export function apiRoutes(deps: Deps) {
@@ -50,6 +51,7 @@ export function apiRoutes(deps: Deps) {
     return c.json({ user: { id: actor.userId, name: actor.name, email: c.get('userEmail') } });
   });
 
+  authed.route('/workspaces/:wsId', contentRoutes(deps));
   authed.route('/workspaces', workspaceRoutes(deps));
 
   // Smoke test for the storage adapter on each host: write, read back, delete.

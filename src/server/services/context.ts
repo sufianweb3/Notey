@@ -17,6 +17,8 @@ export class ServiceError extends Error {
   constructor(
     readonly code: ServiceErrorCode,
     message: string,
+    /** Extra JSON for the client, e.g. the current rev on a save conflict. */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ServiceError';
@@ -35,6 +37,13 @@ export function actorLabel(actor: Actor): string {
 export function assertWorkspaceAccess(ctx: WsCtx): void {
   if (ctx.actor.kind === 'agent' && ctx.actor.workspaceId !== ctx.workspaceId) {
     throw new ServiceError('not_found', 'Workspace not found');
+  }
+}
+
+/** Read-scoped agent tokens can't write anything. */
+export function assertCanWrite(ctx: OwnerCtx): void {
+  if (ctx.actor.kind === 'agent' && ctx.actor.scope !== 'write') {
+    throw new ServiceError('forbidden', 'This token is read-only');
   }
 }
 

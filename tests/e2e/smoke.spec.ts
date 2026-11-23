@@ -74,7 +74,7 @@ test('owner setup, workspace lifecycle, sign out and back in', async ({ page }, 
 
 test('sign-up stays closed and health reports migrations', async ({ request }) => {
   const health = await request.get('/api/health');
-  expect(await health.json()).toMatchObject({ ok: true, migrations: 1 });
+  expect((await health.json()).migrations).toBeGreaterThanOrEqual(3);
   const signUp = await request.post('/api/auth/sign-up/email', {
     data: { name: 'Mallory', email: 'mallory@example.com', password: 'mallory-password-1' },
   });

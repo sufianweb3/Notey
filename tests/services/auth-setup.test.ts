@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { migrations } from '../../src/server/db/migrations/index';
 import { client, makeApp, OWNER, setupOwner } from '../helpers';
 
 describe('first-run setup and auth', () => {
@@ -67,7 +68,7 @@ describe('first-run setup and auth', () => {
   it('reports health with migrations applied', async () => {
     const { app } = await makeApp();
     const res = await client(app).get('/api/health');
-    expect(res.json).toMatchObject({ ok: true, db: 'libsql', migrations: 1 });
+    expect(res.json).toMatchObject({ ok: true, db: 'libsql', migrations: migrations.length });
   });
 
   it('round-trips the storage adapter for the owner', async () => {

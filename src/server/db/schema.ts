@@ -129,6 +129,7 @@ export const page = sqliteTable(
       .notNull()
       .references(() => project.id, { onDelete: 'cascade' }),
     folderId: text('folder_id'),
+    sort: integer('sort').notNull().default(0),
     type: text('type', { enum: ['doc', 'canvas', 'mindmap', 'tasklist'] }).notNull(),
     title: text('title').notNull().default(''),
     icon: text('icon'),
@@ -156,6 +157,7 @@ export const pageVersion = sqliteTable(
       .references(() => page.id, { onDelete: 'cascade' }),
     workspaceId: ws(),
     rev: integer('rev').notNull(),
+    title: text('title').notNull().default(''),
     contentJson: text('content_json'),
     author: text('author').notNull(),
     reason: text('reason').notNull(),

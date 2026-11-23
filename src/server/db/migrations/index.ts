@@ -46,5 +46,20 @@ export const migrations: Migration[] = [
       "CREATE TABLE `verification` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`identifier` text NOT NULL,\n\t`value` text NOT NULL,\n\t`expires_at` integer NOT NULL,\n\t`created_at` integer NOT NULL,\n\t`updated_at` integer NOT NULL\n);",
       "CREATE TABLE `workspace` (\n\t`id` text PRIMARY KEY NOT NULL,\n\t`name` text NOT NULL,\n\t`icon` text,\n\t`sort` integer DEFAULT 0 NOT NULL,\n\t`ai_enabled` integer DEFAULT true NOT NULL,\n\t`created_at` text NOT NULL,\n\t`deleted_at` text\n);"
     ]
+  },
+  {
+    "tag": "0001_page_sort_version_title",
+    "statements": [
+      "ALTER TABLE `page` ADD `sort` integer DEFAULT 0 NOT NULL;",
+      "ALTER TABLE `page_version` ADD `title` text DEFAULT '' NOT NULL;"
+    ]
+  },
+  {
+    "tag": "0002_search_fts",
+    "statements": [
+      "-- Full-text search over page titles and Markdown bodies (tasks join in M2).\n-- Maintained by services/search.ts on every save, trash and restore.\nCREATE VIRTUAL TABLE IF NOT EXISTS `search_fts` USING fts5(\n  `workspace_id` UNINDEXED,\n  `kind` UNINDEXED,\n  `item_id` UNINDEXED,\n  `title`,\n  `body`,\n  tokenize = 'unicode61 remove_diacritics 2'\n);",
+      "CREATE INDEX IF NOT EXISTS `folder_parent_idx` ON `folder` (`workspace_id`, `parent_id`);",
+      "CREATE INDEX IF NOT EXISTS `page_folder_idx` ON `page` (`workspace_id`, `folder_id`);"
+    ]
   }
 ];

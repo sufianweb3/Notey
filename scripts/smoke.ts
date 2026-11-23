@@ -6,6 +6,8 @@
  * CRUD and the storage adapter. Reset the database afterwards so the real
  * owner can run /setup (see scripts/reset-instance.sql).
  */
+export {};
+
 const base = process.argv[2]?.replace(/\/$/, '');
 const full = process.argv.includes('--full');
 if (!base) {
