@@ -1,0 +1,16 @@
+services:
+  notey:
+    build: .
+    image: notey:local
+    ports:
+      - "3000:3000"
+    volumes:
+      - notey-data:/data
+    environment:
+      # Optional. Generated into /data/.env on first run if unset.
+      NOTEY_SECRET: ${NOTEY_SECRET:-}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+    restart: unless-stopped
+
+volumes:
+  notey-data:

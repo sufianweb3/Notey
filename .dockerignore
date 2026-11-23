@@ -1,0 +1,12 @@
+node_modules
+dist
+data
+.vercel
+.wrangler
+.claude
+.git
+tests
+playwright-report
+test-results
+.env
+*.log

@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "notey-node", "runtimeExecutable": "pnpm", "runtimeArgs": ["start"], "port": 3000 },
+    { "name": "notey-dev", "runtimeExecutable": "pnpm", "runtimeArgs": ["dev"], "port": 5173 }
+  ]
+}

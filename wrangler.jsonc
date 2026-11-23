@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "notey",
+  "main": "src/entry/cloudflare.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist/web",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/mcp", "/mcp/*", "/oauth/*", "/ai/*", "/.well-known/*"]
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "notey" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "notey-files" }],
+  // NOTEY_SECRET is a secret: `wrangler secret put NOTEY_SECRET`.
+  // Set PUBLIC_URL here once you use a custom domain.
+  "vars": { "PUBLIC_URL": "" }
+}
