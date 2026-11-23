@@ -4,6 +4,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouteError, RoutePending } from './components/shell/route-states';
 import { ApiError } from './lib/api';
+import { setNavigator } from './lib/page-titles';
+import { applyTheme, PREF, type ThemePref } from './lib/prefs';
 import { routeTree } from './routeTree.gen';
 import './styles/globals.css';
 
@@ -28,6 +30,14 @@ const router = createRouter({
   defaultErrorComponent: RouteError,
   scrollRestoration: true,
 });
+
+// Theme before first paint; links inside the editor navigate through the router.
+try {
+  applyTheme((localStorage.getItem(PREF.theme) as ThemePref | null) ?? 'system');
+} catch {
+  /* storage blocked: follow the system */
+}
+setNavigator((href) => void router.navigate({ href }));
 
 declare module '@tanstack/react-router' {
   interface Register {

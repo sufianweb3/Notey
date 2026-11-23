@@ -95,7 +95,7 @@ describe('conversion details', () => {
   it('maps ChatGPT LaTeX to math blocks and inline math', () => {
     const blocks = load('chatgpt-math.md');
     expect(blocks.filter((b) => b.type === 'math')).toHaveLength(1);
-    const inlineMath = blocks.flatMap((b) => (Array.isArray(b.content) ? b.content : [])).filter((c) => c.type === 'math');
+    const inlineMath = blocks.flatMap((b) => (Array.isArray(b.content) ? b.content : [])).filter((c) => c.type === 'inlineMath');
     expect(inlineMath.length).toBeGreaterThanOrEqual(3);
   });
 
@@ -150,5 +150,23 @@ describe('conversion details', () => {
     const blocks = markdownToBlocks('See [Homepage brief](notey://page/01abc) for details.');
     expect(blocks[0]!.content).toContainEqual({ type: 'pageLink', props: { pageId: '01abc', title: 'Homepage brief' } });
     expect(blocksToMarkdown(blocks)).toBe('See [Homepage brief](notey://page/01abc) for details.\n');
+  });
+});
+
+describe('serializer edge cases', () => {
+  it('separates a numbered list from a following bullet or task list', () => {
+    const md = blocksToMarkdown([
+      { type: 'numberedListItem', content: [{ type: 'text', text: 'One', styles: {} }] },
+      { type: 'checkListItem', props: { checked: false }, content: [{ type: 'text', text: 'Task', styles: {} }] },
+    ]);
+    expect(md).toBe('1. One\n\n- [ ] Task\n');
+    expect(markdownToBlocks(md).map((b) => b.type)).toEqual(['numberedListItem', 'checkListItem']);
+  });
+
+  it('writes inline math as $…$', () => {
+    const md = blocksToMarkdown([
+      { type: 'paragraph', content: [{ type: 'text', text: 'Area ', styles: {} }, { type: 'inlineMath', props: { latex: String.raw`\pi r^2` } }] },
+    ]);
+    expect(md).toBe(String.raw`Area $\pi r^2$` + '\n');
   });
 });

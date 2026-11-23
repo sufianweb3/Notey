@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 /* Generated from DESIGN.md by `pnpm design:tokens`. Light values plus *-dark variants. */
 @import './tokens.css';
+/* BlockNote's editor UI is styled with Tailwind classes; generate those too. */
+@source '../../../node_modules/@blocknote/shadcn/dist';
 
 /*
  * Everything below is derived from DESIGN.md prose (line heights, elevation,
@@ -29,6 +31,23 @@
   /* Surface used by menus and popovers (raised in light, overlay in dark). */
   --color-surface-overlay: var(--color-surface-raised);
 
+  /* shadcn role names, used only by BlockNote's editor UI (see editor.css). */
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-on-surface);
+  --color-popover: var(--color-surface-overlay);
+  --color-popover-foreground: var(--color-on-surface);
+  --color-card: var(--color-surface-raised);
+  --color-card-foreground: var(--color-on-surface);
+  --color-muted: var(--color-neutral);
+  --color-muted-foreground: var(--color-on-surface-muted);
+  --color-accent-foreground: var(--color-on-surface);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary: var(--color-neutral);
+  --color-secondary-foreground: var(--color-on-surface);
+  --color-destructive: var(--color-error);
+  --color-input: var(--color-border-strong);
+  --color-ring: var(--color-primary);
+
   /* Elevation (DESIGN.md § Elevation & Depth) */
   --shadow-2: 0 1px 2px rgb(28 28 30 / 0.05), 0 6px 16px rgb(28 28 30 / 0.08);
   --shadow-3: 0 2px 4px rgb(28 28 30 / 0.05), 0 12px 28px rgb(28 28 30 / 0.1), 0 32px 64px rgb(28 28 30 / 0.12);
@@ -53,6 +72,8 @@
   --spacing-topbar: 44px;
   --spacing-sidebar: 248px;
   --spacing-doc: 720px;
+  /* Room left of the doc text for BlockNote's drag handle and + button. */
+  --spacing-gutter: 54px;
   --spacing-content: 960px;
   --spacing-dialog: 440px;
   --spacing-auth: 380px;
@@ -214,4 +235,58 @@
   &[data-state='closed'] {
     animation: fade-out 120ms var(--ease-out);
   }
+}
+
+/* Hover styles only for a real pointer; touch gets always-visible controls (DESIGN.md § Do's). */
+@custom-variant pointer-hover (@media (hover: hover) and (pointer: fine));
+
+/* Rail peek panel: the one sidebar surface allowed to be translucent. */
+.peek-panel {
+  background: var(--color-neutral);
+  animation: fade-in var(--duration-popover) var(--ease-out);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .peek-panel {
+    background: color-mix(in oklab, var(--color-neutral) 84%, transparent);
+    backdrop-filter: blur(20px) saturate(1.3);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .peek-panel {
+    background: var(--color-neutral);
+    backdrop-filter: none;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes slide-out-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+.sheet-left[data-state='open'] {
+  animation: slide-in-left 320ms var(--ease-drawer);
+}
+.sheet-left[data-state='closed'] {
+  animation: slide-out-left 200ms var(--ease-drawer);
+}
+.sheet-right[data-state='open'] {
+  animation: slide-in-right 320ms var(--ease-drawer);
+}
+.sheet-right[data-state='closed'] {
+  animation: slide-out-right 200ms var(--ease-drawer);
 }

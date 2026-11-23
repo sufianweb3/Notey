@@ -3,6 +3,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    /** Extra fields from the server, e.g. the current rev on a 409. */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -32,9 +34,9 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
     data = null;
   }
   if (!res.ok) {
-    const err = (data as { error?: { code?: string; message?: string }; message?: string; code?: string } | null) ?? {};
+    const err = (data as { error?: { code?: string; message?: string; details?: Record<string, unknown> }; message?: string; code?: string } | null) ?? {};
     const message = err.error?.message ?? err.message ?? `Request failed (${res.status}). Try again.`;
-    throw new ApiError(res.status, err.error?.code ?? err.code ?? 'http_error', message);
+    throw new ApiError(res.status, err.error?.code ?? err.code ?? 'http_error', message, err.error?.details);
   }
   return data as T;
 }

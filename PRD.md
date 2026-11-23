@@ -332,6 +332,19 @@ Hono app (one codebase)
 - Vercel: `pnpm build:vercel` writes `.vercel/output` (Build Output API) with the API pre-bundled by esbuild, instead of relying on Vercel's per-file TypeScript compile.
 - M0 shell: a full sidebar from 840 px and a top bar below that. The icon rail, collapse, tree and bottom tab bar arrive in M1 and M6.
 
+**M1 (2026-11-24)**
+- Editor UI is `@blocknote/shadcn` (MPL-2.0). Its shadcn colour names are remapped to Notey tokens inside BlockNote's `.bn-root` only, because shadcn's "accent" (a hover grey) collides with our lime `accent`.
+- One Markdown ↔ block converter (`src/server/md`, pure TS over `marked`) serves `content_md` on every save, AI paste on the client, and agent writes later. Page links are `[Title](notey://page/<id>)`; inline LaTeX is `$…$`; GitHub alerts (`> [!NOTE]`) become callouts.
+- The 20 paste fixtures in `tests/fixtures/paste/` are written in each assistant's house style, not captured from real chats. Swap in real captures as you collect them.
+- In the tree, each container lists its folders first, then its pages; drag reorders within those groups.
+- Search indexes plain text derived from `content_md`, so snippets never show Markdown syntax.
+- History snapshots the state *before* a save when the last snapshot is 5 or more minutes old, before any agent write, before a restore, and on demand. No pruning yet.
+- Uploaded SVGs are not rewritten; every upload is served same-origin with `nosniff`, a sandboxing CSP and the type sniffed from its bytes, so scripts in an SVG can't run.
+- File URLs are workspace-scoped (`/api/workspaces/:ws/files/:id`), like every other content route.
+- Below 600 px the sidebar opens as a sheet from a top-bar button until M6 adds the bottom tab bar. Home shows greeting and Recent; Pinned and Today join in M2.
+- Image zoom is on double-click (a single click selects the image for editing). "Download Markdown" per page ships now rather than waiting for M6 export.
+- `⌘N` and `⌘1`–`⌘9` are bound, but Chrome and Edge on Windows keep Ctrl+N and Ctrl+1–9 for themselves outside an installed PWA. The command menu offers both actions.
+
 ## 14. Open questions
 
 - **Fonts:** Inter and JetBrains Mono are licensed OFL-1.1, which isn't on the CLAUDE.md allowed list (MIT, MPL-2.0, Apache-2.0, ISC). M0 names them in the font stack but bundles no font files, so browsers fall back to the system UI font. Allow OFL for fonts, or pick a font under an allowed license?

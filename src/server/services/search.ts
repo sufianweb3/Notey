@@ -7,12 +7,25 @@ import { assertWorkspaceAccess, type WsCtx } from './context';
  * page and trash services; only live pages are indexed.
  */
 
+/** Markdown → plain words for the index, so search snippets never show Markdown syntax. */
+export function indexText(md: string): string {
+  return md
+    .replace(/^\s*(`{3,}|~{3,}).*$/gm, '') // code fences
+    .replace(/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/gm, '') // table rules
+    .replace(/^\s{0,3}(#{1,6}|>\s*\[![A-Z]+\]|>|[-*+]|\d+[.)])\s*(\[[ xX]\]\s*)?/gm, '') // block markers
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1') // links and images
+    .replace(/\\([\\`*_{}[\]()#+\-.!|$~<>])/g, '$1') // backslash escapes
+    .replace(/[*_~`|]/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
 export async function indexPage(a: DbAdapter, p: { id: string; workspaceId: string; title: string; contentMd: string }) {
   await a.batch([
     { sql: `DELETE FROM search_fts WHERE item_id = ?`, params: [p.id] },
     {
       sql: `INSERT INTO search_fts (workspace_id, kind, item_id, title, body) VALUES (?, 'page', ?, ?, ?)`,
-      params: [p.workspaceId, p.id, p.title, p.contentMd],
+      params: [p.workspaceId, p.id, p.title, indexText(p.contentMd)],
     },
   ]);
 }

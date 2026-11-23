@@ -34,7 +34,7 @@ function escapeLineStart(line: string): string {
 function textOf(run: InlineContent): string {
   if (run.type === 'text') return run.text;
   if (run.type === 'link') return run.content.map((c) => c.text).join('');
-  if (run.type === 'math') return run.props.latex;
+  if (run.type === 'inlineMath') return run.props.latex;
   if (run.type === 'pageLink') return run.props.title;
   return '';
 }
@@ -88,7 +88,7 @@ export function inlineToMd(content: InlineContent[] | undefined): string {
     }
     flush();
     if (run.type === 'link') out.push(`[${styledRuns(run.content)}](${run.href.replace(/[()\s]/g, encodeURIComponent)})`);
-    else if (run.type === 'math') out.push(`$${run.props.latex}$`);
+    else if (run.type === 'inlineMath') out.push(`$${run.props.latex}$`);
     else if (run.type === 'pageLink') out.push(`[${escapeText(run.props.title || 'Untitled')}](${PAGE_LINK_SCHEME}${run.props.pageId})`);
   }
   flush();
@@ -201,8 +201,10 @@ function blocksToLines(blocks: Block[], depth: number): string[] {
       // List children nest under the marker; other blocks' children follow as an indented group.
       md = md ? `${md}\n${indent(childMd, isList ? '   ' : '')}` : childMd;
     }
-    // Tight lists: no blank line between consecutive items of the same list.
-    const sameList = isList && prev !== null && LIST_TYPES.has(prev);
+    // Tight lists: no blank line between consecutive items of the same list. A
+    // switch between "1." and "-" items starts a new list, so it gets one.
+    const ordered = (t: string) => t === 'numberedListItem';
+    const sameList = isList && prev !== null && LIST_TYPES.has(prev) && ordered(prev) === ordered(block.type);
     if (out.length && !sameList) out.push('');
     out.push(md);
     prev = block.type;

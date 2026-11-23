@@ -21,10 +21,13 @@ export function WorkspaceSwitcher({
   workspaces,
   current,
   className,
+  glyphOnly = false,
 }: {
   workspaces: Workspace[];
   current: Workspace | undefined;
   className?: string;
+  /** Rail variant: only the workspace mark. */
+  glyphOnly?: boolean;
 }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -52,9 +55,13 @@ export function WorkspaceSwitcher({
           )}
           aria-label={`Workspace: ${current?.name ?? 'none'}. Switch workspace`}
         >
-          {current && <WorkspaceGlyph name={current.name} icon={current.icon} selected />}
-          <span className="min-w-0 flex-1 truncate">{current?.name ?? 'Choose a workspace'}</span>
-          <ChevronsUpDown className="size-4 shrink-0 text-on-surface-subtle" strokeWidth={1.5} aria-hidden />
+          {current && <WorkspaceGlyph name={current.name} icon={current.icon} selected className={glyphOnly ? 'size-7 text-label' : undefined} />}
+          {!glyphOnly && (
+            <>
+              <span className="min-w-0 flex-1 truncate">{current?.name ?? 'Choose a workspace'}</span>
+              <ChevronsUpDown className="size-4 shrink-0 text-on-surface-subtle" strokeWidth={1.5} aria-hidden />
+            </>
+          )}
         </M.Trigger>
         <M.Portal>
           <M.Content

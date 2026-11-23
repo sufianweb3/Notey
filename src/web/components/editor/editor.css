@@ -1,0 +1,241 @@
+/*
+ * BlockNote, themed with Notey tokens (DESIGN.md). Loaded with the doc chunk only.
+ * BlockNote portals all its menus into a themed .bn-root, so the remaps below
+ * reach every popover without leaking into the rest of the app.
+ */
+
+.bn-root {
+  /* shadcn names used by BlockNote's UI → Notey roles. In shadcn "accent" is a
+     hover wash, not our lime, so it is remapped here and only here. */
+  --color-accent: color-mix(in oklab, var(--color-border) 75%, transparent);
+  --color-accent-foreground: var(--color-on-surface);
+  --radius: var(--radius-md);
+
+  --bn-font-family: var(--font-sans);
+  --bn-border-radius: var(--radius-lg);
+  --bn-border-radius-small: var(--radius-sm);
+  --bn-colors-editor-text: var(--color-on-surface);
+  --bn-colors-editor-background: transparent;
+  --bn-colors-menu-text: var(--color-on-surface);
+  --bn-colors-menu-background: var(--color-surface-overlay);
+  --bn-colors-hovered-text: var(--color-on-surface);
+  --bn-colors-hovered-background: color-mix(in oklab, var(--color-border) 75%, transparent);
+  --bn-colors-selected-text: var(--color-on-primary);
+  --bn-colors-selected-background: var(--color-primary);
+  --bn-colors-side-menu: var(--color-on-surface-subtle);
+  --bn-colors-border: var(--color-border);
+  --bn-colors-shadow: transparent;
+
+  /* The four muted text colours and two highlights DESIGN.md allows. */
+  --bn-colors-highlights-gray-text: var(--color-on-surface-muted);
+  --bn-colors-highlights-gray-background: color-mix(in oklab, var(--color-on-surface) 8%, transparent);
+  --bn-colors-highlights-green-text: var(--color-accent-ink);
+  --bn-colors-highlights-orange-text: var(--color-warning);
+  --bn-colors-highlights-red-text: var(--color-error);
+  --bn-colors-highlights-yellow-background: var(--color-accent-wash);
+}
+
+.notey-editor .bn-editor {
+  background: transparent;
+  color: var(--color-on-surface);
+  font-size: var(--text-body-doc);
+  line-height: var(--text-body-doc--line-height);
+  /* BlockNote's side menu needs room on the left; keep the text column at 720. */
+  padding-inline: var(--spacing-gutter) 0;
+  padding-block: 0 var(--spacing-16);
+}
+.notey-preview .bn-editor {
+  padding-inline: 0;
+  padding-block: 0;
+}
+
+.notey-editor .bn-block-content[data-content-type='heading'][data-level='1'] {
+  --level: var(--text-h1);
+  font-size: var(--text-h1);
+  line-height: var(--text-h1--line-height);
+  letter-spacing: var(--tracking-h1);
+  font-weight: 600;
+  margin-top: var(--spacing-5);
+}
+.notey-editor .bn-block-content[data-content-type='heading'][data-level='2'] {
+  --level: var(--text-h2);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2--line-height);
+  letter-spacing: var(--tracking-h2);
+  font-weight: 600;
+  margin-top: var(--spacing-4);
+}
+.notey-editor .bn-block-content[data-content-type='heading'][data-level='3'] {
+  --level: var(--text-h3);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3--line-height);
+  font-weight: 600;
+  margin-top: var(--spacing-3);
+}
+
+/* Links: body colour with a hairline underline that thickens on hover. No blue. */
+.notey-editor .bn-editor a:not(.notey-page-link) {
+  color: var(--color-on-surface);
+  text-decoration: underline;
+  text-decoration-color: var(--color-border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.notey-editor .bn-editor a:not(.notey-page-link):hover {
+  text-decoration-thickness: 2px;
+}
+
+.notey-editor .bn-inline-content code {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  background: var(--color-neutral);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+.notey-editor .bn-block-content[data-content-type='codeBlock'] {
+  border-radius: var(--radius-lg);
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  line-height: var(--text-mono--line-height);
+}
+.notey-editor .bn-block-content[data-content-type='quote'] blockquote {
+  border-left: 2px solid var(--color-border-strong);
+  color: var(--color-on-surface-muted);
+}
+.notey-editor [data-content-type='checkListItem'][data-checked='true'] .bn-inline-content {
+  color: var(--color-on-surface-subtle);
+}
+.notey-editor .bn-editor ::selection {
+  background: var(--color-accent-wash);
+}
+
+/* Callout: a raised surface with an icon; meaning via icon and word, not colour alone. */
+.notey-callout {
+  display: flex;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.notey-callout-icon {
+  display: grid;
+  place-items: center;
+  width: var(--spacing-6);
+  height: var(--spacing-6);
+  margin-top: 1px;
+  border-radius: var(--radius-sm);
+  color: var(--color-on-surface-muted);
+  flex-shrink: 0;
+}
+.notey-callout-icon:hover {
+  background: var(--color-neutral);
+}
+.notey-callout-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.notey-callout[data-kind='warning'] .notey-callout-icon {
+  color: var(--color-warning);
+}
+.notey-callout[data-kind='caution'] .notey-callout-icon {
+  color: var(--color-error);
+}
+.notey-callout[data-kind='tip'] .notey-callout-icon {
+  color: var(--color-accent-ink);
+}
+
+.notey-embed {
+  border-radius: var(--radius-lg);
+}
+.notey-mermaid svg {
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  display: block;
+}
+.notey-inline-math {
+  border-radius: var(--radius-sm);
+  padding-inline: 2px;
+}
+.notey-inline-math:hover {
+  background: var(--color-neutral);
+}
+
+.notey-page-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--color-on-surface);
+  text-decoration: underline;
+  text-decoration-color: var(--color-border-strong);
+  text-underline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+.notey-page-link svg {
+  width: 14px;
+  height: 14px;
+  align-self: center;
+  color: var(--color-on-surface-muted);
+}
+.notey-page-link:hover {
+  background: var(--color-neutral);
+}
+.notey-page-link[data-missing] {
+  color: var(--color-on-surface-subtle);
+  text-decoration-style: dashed;
+}
+
+.notey-swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.notey-swatch[data-text-color='gray'] {
+  color: var(--bn-colors-highlights-gray-text);
+}
+.notey-swatch[data-text-color='green'] {
+  color: var(--bn-colors-highlights-green-text);
+}
+.notey-swatch[data-text-color='orange'] {
+  color: var(--bn-colors-highlights-orange-text);
+}
+.notey-swatch[data-text-color='red'] {
+  color: var(--bn-colors-highlights-red-text);
+}
+.notey-swatch[data-background-color='yellow'] {
+  background: var(--bn-colors-highlights-yellow-background);
+}
+.notey-swatch[data-background-color='gray'] {
+  background: var(--bn-colors-highlights-gray-background);
+}
+
+@media (max-width: 599px) {
+  .notey-editor .bn-editor {
+    padding-inline: var(--spacing-6) 0;
+  }
+}
+
+/* Selected blocks and drop targets: Notey's selection colours, not BlockNote's blue. */
+.notey-editor .bn-block-content.ProseMirror-selectednode > ::after,
+.notey-editor .ProseMirror-selectednode > .bn-block-content > ::after,
+.notey-editor .bn-block-content .ProseMirror-selectednode::after,
+.notey-editor .bn-block-outer[data-drop-target='true']::after {
+  background-color: color-mix(in oklab, var(--color-accent-wash) 60%, transparent);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+  border-radius: var(--radius-lg);
+}
+.notey-editor .bn-inline-content .ProseMirror-selectednode::after {
+  background-color: var(--color-accent-wash);
+  box-shadow: none;
+}
+
+.notey-editor .bn-block-content[data-content-type='table'] th,
+.notey-editor .bn-block-content[data-content-type='table'] td {
+  border-color: var(--color-border-strong);
+}

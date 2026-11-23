@@ -137,7 +137,7 @@ function inline(tokens: Token[] | undefined, styles: Styles = {}, out: InlineCon
         break;
       }
       case 'inlineMath':
-        out.push({ type: 'math', props: { latex: (t as unknown as MathToken).latex } });
+        out.push({ type: 'inlineMath', props: { latex: (t as unknown as MathToken).latex } });
         break;
       case 'html': {
         const html = (t as Tokens.HTML).text;

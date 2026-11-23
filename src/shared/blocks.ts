@@ -16,7 +16,7 @@ export type Styles = Partial<{
 export type StyledText = { type: 'text'; text: string; styles?: Styles };
 export type LinkContent = { type: 'link'; href: string; content: StyledText[] };
 /** Inline LaTeX, `$…$` in Markdown. */
-export type MathInline = { type: 'math'; props: { latex: string }; content?: undefined };
+export type MathInline = { type: 'inlineMath'; props: { latex: string }; content?: undefined };
 /** Link to another page. Markdown: [Title](notey://page/<id>) */
 export type PageLinkInline = { type: 'pageLink'; props: { pageId: string; title: string }; content?: undefined };
 

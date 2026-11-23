@@ -34,7 +34,8 @@ test('owner setup, workspace lifecycle, sign out and back in', async ({ page }, 
   await page.getByRole('button', { name: 'New workspace' }).click();
   await page.getByLabel('Name', { exact: true }).fill(name);
   await page.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(page.getByRole('heading', { name: `${name} is ready` })).toBeVisible();
+  await expect(page).toHaveURL(/\/w\/[^/]+$/);
+  await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText(name);
 
   // Rename and set an icon
   const renamed = `${name} renamed`;

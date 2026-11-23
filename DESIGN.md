@@ -369,3 +369,6 @@ No gradients or glow for AI. Under reduced motion, the pulse becomes static text
 - Excalidraw theme mapping (colors, fonts, toolbar re-skin) to be finalized in M3.
 - App icon and favicon not designed yet (start: charcoal rounded square, lime "N").
 - Print stylesheet for PDF export to be defined in M6.
+- Editor colour picker maps BlockNote's colour names to the four allowed text colours (gray, green → olive `accent-ink`, orange → amber `warning`, red → `error`) and two highlights (yellow → `accent-wash`, gray wash). The mapping lives in `src/web/components/editor/editor.css`.
+- Inline equations are edited through a native prompt for now; a proper inline popover is still to design.
+- Inter and JetBrains Mono are not bundled yet (licence question in PRD §14), so the system font shows.
