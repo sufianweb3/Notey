@@ -12,3 +12,6 @@ test-results/
 *.log
 .claude/skills/
 .claude/settings.local.json
+
+.vercel
+.env*
