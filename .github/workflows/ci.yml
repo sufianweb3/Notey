@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck, lint, tests, builds, e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm design:lint
+      # Web, Node and Worker bundles (the Worker build is a wrangler dry run, no account needed).
+      - run: pnpm build
+      - name: Main chunk stays under 250 KB gzip (CLAUDE.md rule 9)
+        run: |
+          size=$(gzip -c dist/web/assets/index-*.js | wc -c)
+          echo "main chunk: $((size / 1024)) KB gzip"
+          test "$size" -lt 256000
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results/
+          retention-days: 7
+
+  docker:
+    name: Docker image builds, runs and keeps data
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t notey:ci .
+      - name: Start the container
+        run: |
+          docker volume create notey-ci
+          docker run -d --name notey -p 3000:3000 -v notey-ci:/data -e PUBLIC_URL=http://localhost:3000 notey:ci
+          for i in $(seq 1 60); do curl -fs http://localhost:3000/api/health && break; sleep 1; done
+          curl -fs http://localhost:3000/api/health
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Smoke test (claims the instance, exercises auth, pages, search, uploads)
+        run: npx --yes tsx@4 scripts/smoke.ts http://localhost:3000 --full
+      - name: Data and NOTEY_SECRET survive a restart
+        run: |
+          docker restart notey
+          for i in $(seq 1 60); do curl -fs http://localhost:3000/api/health >/dev/null && break; sleep 1; done
+          curl -fs http://localhost:3000/api/setup | grep -q '"needsSetup":false'
+          test "$(docker inspect --format '{{.State.Health.Status}}' notey)" != "unhealthy"
+      - name: Container logs
+        if: always()
+        run: docker logs notey
