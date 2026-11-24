@@ -22,9 +22,23 @@ await build({
   logLevel: 'info',
 });
 
+// Run the function next to the database: set NOTEY_VERCEL_REGION (e.g. sin1 for a
+// D1 database in Singapore) in the Vercel project. Unset means Vercel's default.
+const region = process.env.NOTEY_VERCEL_REGION?.trim();
 writeFileSync(
   `${out}/functions/api.func/.vc-config.json`,
-  JSON.stringify({ runtime: 'nodejs22.x', handler: 'index.mjs', launcherType: 'Nodejs', shouldAddHelpers: false, supportsResponseStreaming: true }, null, 2),
+  JSON.stringify(
+    {
+      runtime: 'nodejs22.x',
+      handler: 'index.mjs',
+      launcherType: 'Nodejs',
+      shouldAddHelpers: false,
+      supportsResponseStreaming: true,
+      ...(region ? { regions: [region] } : {}),
+    },
+    null,
+    2,
+  ),
 );
 writeFileSync(`${out}/functions/api.func/package.json`, JSON.stringify({ type: 'module' }));
 
