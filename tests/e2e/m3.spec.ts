@@ -93,6 +93,8 @@ test('canvas opens with its tools, and a doc draws a chart from pasted Markdown'
   await command(page, 'New doc');
   await page.getByLabel('Page title').fill('Pipeline');
   await page.getByLabel('Page title').press('Enter');
+  // The editor chunk may still be mounting on a fast runner: paste only once it's there.
+  await expect(page.locator('.bn-editor')).toBeVisible();
   await page.evaluate(() => {
     const dt = new DataTransfer();
     dt.setData('text/plain', '## Signups\n\n```chart\ntype: line\ntitle: Signups\nhighlight: 2026\n\nMonth,2025,2026\nJan,120,180\nFeb,140,210\n```\n');
