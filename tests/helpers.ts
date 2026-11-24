@@ -2,7 +2,10 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client';
+import { d1GatewayAdapter } from '../src/adapters/db/d1-gateway';
 import { libsqlAdapter } from '../src/adapters/db/libsql';
+import { handleGateway } from '../src/server/db/gateway';
+import { d1Shim } from './d1-shim';
 import { createApp } from '../src/server/app';
 import { migrate } from '../src/server/db/migrate';
 import type { DbAdapter } from '../src/server/db/types';
@@ -11,12 +14,27 @@ import type { StorageAdapter } from '../src/server/storage';
 
 export const ORIGIN = 'http://localhost';
 
-/** A fresh SQLite file per test (in-memory libSQL loses tables across transactions). */
+/**
+ * A fresh SQLite file per test (in-memory libSQL loses tables across transactions).
+ * With NOTEY_TEST_DB=gateway (the "gateway" Vitest project), the same tests run
+ * through the Vercel D1 adapter → gateway handler → D1 stand-in, JSON and all.
+ */
 export async function makeDb(): Promise<DbAdapter> {
   const dir = mkdtempSync(join(tmpdir(), 'notey-test-'));
   const client = createClient({ url: `file:${join(dir, 'test.db')}` });
   await client.execute('PRAGMA foreign_keys = ON');
-  const adapter = libsqlAdapter(client);
+  let adapter: DbAdapter;
+  if (process.env.NOTEY_TEST_DB === 'gateway') {
+    const secret = 'gateway-test-secret-'.padEnd(48, 'x');
+    const shim = d1Shim(client);
+    adapter = d1GatewayAdapter({
+      url: 'http://gateway.test/',
+      secret,
+      fetch: (input, init) => handleGateway(new Request(input, init), { db: shim, secret }),
+    });
+  } else {
+    adapter = libsqlAdapter(client);
+  }
   await migrate(adapter);
   return adapter;
 }

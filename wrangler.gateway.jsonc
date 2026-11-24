@@ -1,0 +1,11 @@
+{
+  // D1 gateway for the Vercel deploy (src/entry/d1-gateway.ts). Not needed on
+  // Cloudflare or Docker. Secret: wrangler secret put GATEWAY_SECRET -c wrangler.gateway.jsonc
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "notey-db-gateway",
+  "main": "src/entry/d1-gateway.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "d1_databases": [{ "binding": "DB", "database_name": "notey-vercel" }]
+}

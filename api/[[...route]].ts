@@ -4,20 +4,32 @@
  */
 import { getRequestListener } from '@hono/node-server';
 import { createClient } from '@libsql/client/web';
+import { d1GatewayAdapter } from '../src/adapters/db/d1-gateway';
 import { libsqlAdapter } from '../src/adapters/db/libsql';
 import { vercelBlobAdapter } from '../src/adapters/storage/vercel-blob';
 import { createApp } from '../src/server/app';
 import { withClientIp } from '../src/server/client-ip';
+import type { DbAdapter } from '../src/server/db/types';
 
 const env = process.env;
-const url = env.TURSO_URL ?? env.TURSO_DATABASE_URL;
-const authToken = env.TURSO_TOKEN ?? env.TURSO_AUTH_TOKEN;
 const blobToken = env.BLOB_READ_WRITE_TOKEN;
-if (!url) throw new Error('TURSO_URL is not set');
 if (!blobToken) throw new Error('BLOB_READ_WRITE_TOKEN is not set');
 
+/**
+ * Database: Turso (TURSO_URL + TURSO_TOKEN), or a Cloudflare D1 database
+ * through the gateway Worker (NOTEY_DB_GATEWAY_URL + NOTEY_DB_GATEWAY_SECRET).
+ */
+function database(): DbAdapter {
+  const tursoUrl = env.TURSO_URL ?? env.TURSO_DATABASE_URL;
+  if (tursoUrl) return libsqlAdapter(createClient({ url: tursoUrl, authToken: env.TURSO_TOKEN ?? env.TURSO_AUTH_TOKEN }));
+  if (env.NOTEY_DB_GATEWAY_URL && env.NOTEY_DB_GATEWAY_SECRET) {
+    return d1GatewayAdapter({ url: env.NOTEY_DB_GATEWAY_URL, secret: env.NOTEY_DB_GATEWAY_SECRET });
+  }
+  throw new Error('No database configured: set TURSO_URL, or NOTEY_DB_GATEWAY_URL and NOTEY_DB_GATEWAY_SECRET');
+}
+
 const app = createApp({
-  db: libsqlAdapter(createClient({ url, authToken })),
+  db: database(),
   storage: vercelBlobAdapter(blobToken),
   env: { NOTEY_SECRET: env.NOTEY_SECRET ?? '', PUBLIC_URL: env.PUBLIC_URL || undefined },
 });

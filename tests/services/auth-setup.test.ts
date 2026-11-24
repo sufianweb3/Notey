@@ -68,7 +68,7 @@ describe('first-run setup and auth', () => {
   it('reports health with migrations applied', async () => {
     const { app } = await makeApp();
     const res = await client(app).get('/api/health');
-    expect(res.json).toMatchObject({ ok: true, db: 'libsql', migrations: migrations.length });
+    expect(res.json).toMatchObject({ ok: true, migrations: migrations.length });
   });
 
   it('round-trips the storage adapter for the owner', async () => {

@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"pnpm dev:api\" \"vite\"",
     "dev:api": "tsx watch --env-file-if-exists=.env src/entry/node.ts",
-    "build": "pnpm build:web && pnpm build:node && pnpm build:cf",
+    "build": "pnpm build:web && pnpm build:node && pnpm build:cf && wrangler deploy -c wrangler.gateway.jsonc --dry-run --outdir dist/gateway",
     "build:web": "vite build",
     "build:node": "tsx scripts/build-node.ts",
     "build:cf": "wrangler deploy --dry-run --outdir dist/cf",
@@ -27,7 +27,8 @@
     "deploy:vercel": "vercel deploy --prod",
     "smoke": "tsx scripts/smoke.ts",
     "design:lint": "node node_modules/@google/design.md/dist/index.js lint DESIGN.md",
-    "design:tokens": "node node_modules/@google/design.md/dist/index.js export --format css-tailwind DESIGN.md > src/web/styles/tokens.css"
+    "design:tokens": "node node_modules/@google/design.md/dist/index.js export --format css-tailwind DESIGN.md > src/web/styles/tokens.css",
+    "deploy:gateway": "wrangler deploy -c wrangler.gateway.jsonc"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
