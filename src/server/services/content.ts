@@ -13,7 +13,7 @@ import {
 } from '../../shared/schemas';
 import { folder, page, project, workspace } from '../db/schema';
 import type { DbAdapter } from '../db/types';
-import { blocksToMarkdown } from '../md/blocks-to-md';
+import { pageMarkdown } from './tasks';
 import { logChange } from './changelog';
 import { actorLabel, assertCanWrite, assertWorkspaceAccess, ServiceError, type WsCtx } from './context';
 import { indexPage } from './search';
@@ -251,7 +251,7 @@ export async function createPage(
     title: input.title,
     icon: null,
     contentJson: input.content ? JSON.stringify(input.content) : null,
-    contentMd: input.content ? blocksToMarkdown(input.content) : '',
+    contentMd: input.content ? await pageMarkdown(a, ctx.workspaceId, input.content) : '',
     rev: 0,
     createdBy: who,
     updatedBy: who,
@@ -314,7 +314,7 @@ export async function savePageContent(
   }
   // Agents always snapshot first (rule 4); the owner every 5 minutes of activity.
   await snapshotIfDue(a, ctx, current, ctx.actor.kind === 'agent' ? 'before agent edit' : 'autosave', ctx.actor.kind === 'agent');
-  const contentMd = blocksToMarkdown(input.content);
+  const contentMd = await pageMarkdown(a, ctx.workspaceId, input.content);
   const updatedAt = nowIso();
   const res = await a.run(
     `UPDATE page SET content_json = ?, content_md = ?, rev = rev + 1, updated_at = ?, updated_by = ?

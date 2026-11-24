@@ -131,10 +131,13 @@ export const moveInput = z.object({
 });
 export type MoveInput = z.infer<typeof moveInput>;
 
-export const itemRefInput = z.object({ kind: z.enum(itemKinds), id: z.string().min(1) });
+/** Things that can go to Trash: tree items and tasks. */
+export const trashKinds = ['project', 'folder', 'page', 'task'] as const;
+export type TrashKind = (typeof trashKinds)[number];
+export const itemRefInput = z.object({ kind: z.enum(trashKinds), id: z.string().min(1) });
 
 export type TrashItem = {
-  kind: ItemKind;
+  kind: TrashKind;
   id: string;
   name: string;
   deletedAt: string;
@@ -148,12 +151,14 @@ export type VersionSummary = { id: string; rev: number; title: string; author: s
 export type VersionDetail = VersionSummary & { content: unknown[] | null; contentMd: string };
 
 export type SearchHit = {
-  kind: 'page';
+  kind: 'page' | 'task';
+  /** Tasks only. */
+  status?: TaskStatus;
   id: string;
   title: string;
   /** Snippet with matches wrapped in \u0001 … \u0002. */
   snippet: string;
-  projectId: string;
+  projectId: string | null;
   updatedAt: string;
 };
 
@@ -161,6 +166,87 @@ export type Change = { seq: number; entity: string; entityId: string; op: string
 
 export type FileInfo = { id: string; name: string; mime: string; size: number; url: string };
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+// ── M2: tasks and pins ──────────────────────────────────────────────────────
+export const taskStatuses = ['todo', 'doing', 'done'] as const;
+export type TaskStatus = (typeof taskStatuses)[number];
+export type TaskKind = 'once' | 'repeat' | 'dated';
+
+export type Task = {
+  id: string;
+  projectId: string | null;
+  pageId: string | null;
+  title: string;
+  notesMd: string;
+  status: TaskStatus;
+  kind: TaskKind;
+  dueDate: string | null;
+  dueTime: string | null;
+  rrule: string | null;
+  sort: number;
+  completedAt: string | null;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const calendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+const clockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use HH:MM');
+
+export const createTaskInput = z.object({
+  title: z.string().trim().min(1, 'Give the task a title').max(300),
+  notesMd: z.string().max(20_000).optional(),
+  status: z.enum(taskStatuses).optional(),
+  dueDate: calendarDate.nullable().optional(),
+  dueTime: clockTime.nullable().optional(),
+  rrule: z.string().max(200).nullable().optional(),
+  projectId: z.string().min(1).nullable().optional(),
+  pageId: z.string().min(1).nullable().optional(),
+});
+export type CreateTaskInput = z.infer<typeof createTaskInput>;
+
+export const updateTaskInput = createTaskInput
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, 'Nothing to update');
+export type UpdateTaskInput = z.infer<typeof updateTaskInput>;
+
+export const taskViews = ['inbox', 'today', 'upcoming', 'project', 'all'] as const;
+export type TaskView = (typeof taskViews)[number];
+export const taskListQuery = z.object({
+  view: z.enum(taskViews),
+  today: calendarDate,
+  projectId: z.string().optional(),
+  /** Board view: include recently done tasks. */
+  includeDone: z.enum(['0', '1']).optional(),
+});
+
+/** The owner's local date decides what "today" and "overdue" mean. */
+export const completeTaskInput = z.object({ today: calendarDate });
+export const reorderInput = z.object({ ids: z.array(z.string().min(1)).min(1).max(1000) });
+
+export type TaskCounts = { today: number; overdue: number; inbox: number };
+
+export const pinTypes = ['page', 'folder', 'project', 'task'] as const;
+export type PinType = (typeof pinTypes)[number];
+export const pinInput = z.object({ itemType: z.enum(pinTypes), itemId: z.string().min(1) });
+
+export type PinItem = {
+  id: string;
+  itemType: PinType;
+  itemId: string;
+  sort: number;
+  title: string;
+  icon: string | null;
+  pageType?: PageType;
+  projectId?: string | null;
+  /** Pages: last edit; tasks: due date. */
+  updatedAt?: string;
+  updatedBy?: string;
+  task?: Task;
+  /** Projects: how many of their tasks are done. */
+  progress?: { done: number; total: number };
+};
 
 export const sessionUserSchema = z.object({
   id: z.string(),

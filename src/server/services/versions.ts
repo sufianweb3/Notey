@@ -4,7 +4,7 @@ import { nowIso, uuidv7 } from '../../shared/ids';
 import type { VersionDetail, VersionSummary } from '../../shared/schemas';
 import { page, pageVersion } from '../db/schema';
 import type { DbAdapter } from '../db/types';
-import { blocksToMarkdown } from '../md/blocks-to-md';
+import { pageMarkdown } from './tasks';
 import { logChange } from './changelog';
 import { assertLiveWorkspace, livePage, pageDetailDto } from './content';
 import { actorLabel, assertCanWrite, ServiceError, type WsCtx } from './context';
@@ -83,7 +83,7 @@ export async function getVersion(a: DbAdapter, ctx: WsCtx, pageId: string, versi
   await livePage(a, ctx, pageId);
   const row = await findVersion(a, ctx, pageId, versionId);
   const content = row.contentJson ? (JSON.parse(row.contentJson) as Block[]) : null;
-  return { ...summary(row), content, contentMd: blocksToMarkdown(content) };
+  return { ...summary(row), content, contentMd: await pageMarkdown(a, ctx.workspaceId, content) };
 }
 
 export async function createSnapshot(a: DbAdapter, ctx: WsCtx, pageId: string): Promise<VersionSummary> {
@@ -99,7 +99,7 @@ export async function restoreVersion(a: DbAdapter, ctx: WsCtx, pageId: string, v
   const current = await livePage(a, ctx, pageId);
   const v = await findVersion(a, ctx, pageId, versionId);
   await snapshot(a, ctx, current, 'before restore');
-  const contentMd = v.contentJson ? blocksToMarkdown(JSON.parse(v.contentJson) as Block[]) : '';
+  const contentMd = v.contentJson ? await pageMarkdown(a, ctx.workspaceId, JSON.parse(v.contentJson) as Block[]) : '';
   const patch = {
     title: v.title,
     contentJson: v.contentJson,

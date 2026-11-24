@@ -129,9 +129,12 @@ function indent(text: string, by: string): string {
     .join('\n');
 }
 
-const LIST_TYPES = new Set(['bulletListItem', 'numberedListItem', 'checkListItem', 'toggleListItem']);
+const LIST_TYPES = new Set(['bulletListItem', 'numberedListItem', 'checkListItem', 'toggleListItem', 'task']);
 
-function blockToMd(block: Block, ordinal: number): string {
+/** Live data some blocks point at, e.g. the task behind a task block. */
+export type MdContext = { tasks?: Map<string, { title: string; done: boolean }> };
+
+function blockToMd(block: Block, ordinal: number, ctx: MdContext): string {
   const p = block.props ?? {};
   const inline = Array.isArray(block.content) ? (block.content as InlineContent[]) : undefined;
   const body = inlineToMd(inline);
@@ -180,6 +183,11 @@ function blockToMd(block: Block, ordinal: number): string {
     case 'video':
     case 'audio':
       return p.url ? `[${String(p.name || p.url).replace(/[[\]]/g, '')}](${String(p.url)})` : '';
+    case 'task': {
+      // A task block shows a real task; Markdown gets its current title and state.
+      const t = ctx.tasks?.get(String(p.taskId ?? ''));
+      return t ? `- [${t.done ? 'x' : ' '}] ${escapeText(t.title)}` : '';
+    }
     case 'pageBreak':
       return '---';
     default:
@@ -188,16 +196,16 @@ function blockToMd(block: Block, ordinal: number): string {
   }
 }
 
-function blocksToLines(blocks: Block[], depth: number): string[] {
+function blocksToLines(blocks: Block[], depth: number, ctx: MdContext): string[] {
   const out: string[] = [];
   let ordinal = 0;
   let prev: string | null = null;
   for (const block of blocks) {
     ordinal = block.type === 'numberedListItem' ? (prev === 'numberedListItem' ? ordinal + 1 : Number(block.props?.start) || 1) : 0;
-    let md = blockToMd(block, ordinal);
+    let md = blockToMd(block, ordinal, ctx);
     const isList = LIST_TYPES.has(block.type);
     if (block.children?.length) {
-      const childMd = blocksToLines(block.children, depth + 1).join('\n');
+      const childMd = blocksToLines(block.children, depth + 1, ctx).join('\n');
       // List children nest under the marker; other blocks' children follow as an indented group.
       md = md ? `${md}\n${indent(childMd, isList ? '   ' : '')}` : childMd;
     }
@@ -212,10 +220,10 @@ function blocksToLines(blocks: Block[], depth: number): string[] {
   return out;
 }
 
-export function blocksToMarkdown(blocks: Block[] | null | undefined): string {
+export function blocksToMarkdown(blocks: Block[] | null | undefined, ctx: MdContext = {}): string {
   if (!blocks?.length) return '';
   return (
-    blocksToLines(blocks, 0)
+    blocksToLines(blocks, 0, ctx)
       .join('\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim() + '\n'
