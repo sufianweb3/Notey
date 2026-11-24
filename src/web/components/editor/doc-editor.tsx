@@ -317,9 +317,19 @@ const DocEditor = forwardRef<EditorHandle, Props>(function DocEditor({ ws, page,
   useImperativeHandle(ref, () => ({
     load,
     focusStart: () => {
-      const first = editor.document[0];
-      if (first) editor.setTextCursorPosition(first, 'start');
-      editor.focus();
+      // The ProseMirror view can attach a frame after mount: retry until it takes focus.
+      let tries = 0;
+      const attempt = () => {
+        const view = editor.prosemirrorView;
+        if (view?.dom.isConnected) {
+          const first = editor.document[0];
+          if (first) editor.setTextCursorPosition(first, 'start');
+          editor.focus();
+          if (view.hasFocus()) return;
+        }
+        if (++tries < 20) requestAnimationFrame(attempt);
+      };
+      attempt();
     },
   }));
 

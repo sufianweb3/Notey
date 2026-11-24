@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateWorkspaceInput, SessionUser, UpdateWorkspaceInput, Workspace } from '@shared/schemas';
-import { api, ApiError } from './api';
+import { api } from './api';
 import { fixtureOverride } from '../fixtures/workspaces';
 
 export const keys = {
@@ -19,13 +19,11 @@ export const setupQuery = queryOptions({
 /** The signed-in owner, or null when there is no session. */
 export const meQuery = queryOptions({
   queryKey: keys.me,
+  // Better Auth answers 200 with null when signed out, so a signed-out visit
+  // doesn't log a failed request in the console.
   queryFn: async () => {
-    try {
-      return (await api<{ user: SessionUser }>('/api/me')).user;
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) return null;
-      throw e;
-    }
+    const res = await api<{ user: SessionUser } | null>('/api/auth/get-session');
+    return res?.user ? { id: res.user.id, name: res.user.name, email: res.user.email } : null;
   },
   staleTime: 5 * 60_000,
 });

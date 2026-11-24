@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
 import { CloudOff, Ellipsis, History, TriangleAlert } from 'lucide-react';
 import { DropdownMenu, Popover } from 'radix-ui';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { PageDetail } from '@shared/schemas';
 import type { EditorHandle, SaveState } from '@web/components/editor/doc-editor';
@@ -14,12 +14,12 @@ import { TopBar } from '@web/components/shell/top-bar';
 import { Button } from '@web/components/ui/button';
 import { api, ApiError, errorMessage } from '@web/lib/api';
 import { base, ck, pageQuery, pageTitle, patchTree, pathOf, treeQuery, useContentMutations } from '@web/lib/content';
+import { DocEditorSlot, loadEditor } from '@web/lib/editor-loader';
 import { setPageTitles } from '@web/lib/page-titles';
 import { workspacesQuery } from '@web/lib/queries';
 import { editedByLabel, relativeTime } from '@web/lib/time';
 
-const loadEditor = () => import('@web/components/editor/doc-editor');
-const DocEditor = lazy(loadEditor);
+
 
 export const Route = createFileRoute('/_app/w/$workspaceId/p/$pageId')({
   loader: async ({ context: { queryClient }, params }) => {
@@ -168,7 +168,7 @@ function PageView() {
           onEnter={focusEditor}
         />
         <Suspense fallback={<div className="pl-gutter"><SkeletonRows rows={5} /></div>}>
-          <DocEditor
+          <DocEditorSlot
             key={pageId}
             ref={editor}
             ws={ws}
