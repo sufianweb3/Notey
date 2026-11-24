@@ -345,6 +345,12 @@ Hono app (one codebase)
 - Image zoom is on double-click (a single click selects the image for editing). "Download Markdown" per page ships now rather than waiting for M6 export.
 - `⌘N` and `⌘1`–`⌘9` are bound, but Chrome and Edge on Windows keep Ctrl+N and Ctrl+1–9 for themselves outside an installed PWA. The command menu offers both actions.
 
+**Deploy targets (2026-11-24)**
+- **Vercel without Turso.** The owner couldn't connect Turso, so the Vercel deploy can use a Cloudflare D1 database through a small gateway Worker (`src/entry/d1-gateway.ts`, `wrangler.gateway.jsonc`, `pnpm deploy:gateway`). The Vercel entry picks Turso when `TURSO_URL` is set, otherwise the gateway (`NOTEY_DB_GATEWAY_URL`, `NOTEY_DB_GATEWAY_SECRET`). The gateway runs SQL only for requests carrying a 32-byte shared secret, checked in constant time. This is a deliberate exception to "no extra services": Cloudflare's REST API would need a user-made token and allows only 1,200 calls per 5 minutes per account, which steady typing exceeds. The full service and isolation suites run a second time through the gateway path (`gateway` Vitest project).
+- **Region.** A D1 database is placed near whoever creates it. Set `NOTEY_VERCEL_REGION` (e.g. `sin1`) so the Vercel function runs next to it; across an ocean, each request was about 5 times slower.
+- **Docker** is verified in GitHub Actions (`.github/workflows/ci.yml`): the image builds, runs, passes `pnpm smoke --full`, and keeps its data and `NOTEY_SECRET` across a restart. The runtime image holds only `@libsql/client` beside the bundles.
+- The libSQL adapter uses `drizzle-orm/libsql/web`, which takes any client and never imports native libSQL, so serverless bundles stay portable.
+
 ## 14. Open questions
 
 - **Fonts:** Inter and JetBrains Mono are licensed OFL-1.1, which isn't on the CLAUDE.md allowed list (MIT, MPL-2.0, Apache-2.0, ISC). M0 names them in the font stack but bundles no font files, so browsers fall back to the system UI font. Allow OFL for fonts, or pick a font under an allowed license?

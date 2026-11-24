@@ -29,11 +29,14 @@ pnpm deploy:cf                                   # creates the D1 database and R
 openssl rand -base64 32 | pnpm wrangler secret put NOTEY_SECRET
 ```
 
-## Vercel (Functions + Turso + Blob)
+## Vercel (Functions + Blob, database on Turso or Cloudflare D1)
 
-1. `vercel link`, then add a Turso database (Vercel Marketplace) and a private Blob store to the project.
-2. Set `NOTEY_SECRET` (32+ random bytes, base64) in the project's environment variables.
-3. `vercel deploy --prod`. Vercel runs `pnpm build:vercel`.
+1. `vercel link`, then add a private Blob store to the project.
+2. Pick a database:
+   - **Turso:** add it from the Vercel Marketplace (it sets `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`).
+   - **Cloudflare D1:** run `pnpm deploy:gateway`. Generate one secret and set it twice: `pnpm wrangler secret put GATEWAY_SECRET -c wrangler.gateway.jsonc`, and `NOTEY_DB_GATEWAY_SECRET` on Vercel. Also set `NOTEY_DB_GATEWAY_URL` (the Worker's URL) and `NOTEY_VERCEL_REGION` to the Vercel region nearest the database (`pnpm wrangler d1 info notey-vercel` shows its region).
+3. Set `NOTEY_SECRET` (32+ random bytes, base64) in the project's environment variables.
+4. `vercel deploy --prod`. Vercel runs `pnpm build:vercel`.
 
 After any deploy, visit the URL straight away and claim it at `/setup`, then run `pnpm smoke <url>` to check it.
 
