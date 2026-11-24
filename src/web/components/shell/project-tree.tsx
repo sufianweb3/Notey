@@ -22,6 +22,7 @@ import { errorMessage } from '@web/lib/api';
 import { cn } from '@web/lib/cn';
 import { base, childrenOf, pageTitle, treeQuery, useContentMutations, type NodeRef } from '@web/lib/content';
 import { PREF, setPref, usePref } from '@web/lib/prefs';
+import { isPinned, pinsQuery, usePins } from '@web/lib/tasks';
 import { SkeletonRows } from './route-states';
 import { ItemContextMenu, ItemDropdownContent, type ItemAction } from './item-menu';
 import { MoveDialog } from './move-dialog';
@@ -120,6 +121,8 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { pageId?: string };
   const m = useContentMutations(ws);
+  const pinsApi = usePins(ws);
+  const { data: pinList } = useQuery(pinsQuery(ws));
 
   const openRaw = usePref(PREF.expanded(ws), '[]');
   const open = useMemo(() => new Set<string>(JSON.parse(openRaw) as string[]), [openRaw]);
@@ -209,8 +212,10 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
         return void navigator.clipboard
           .writeText(`${location.origin}/w/${ws}/p/${row.ref.id}`)
           .then(() => toast('Link copied'), () => toast.error("Couldn't copy the link."));
+      case 'pin':
+        return pinsApi.toggle.mutate({ itemType: row.ref.kind, itemId: row.ref.id, pinned: isPinned(pinList, row.ref.kind, row.ref.id) });
       case 'markdown':
-        return void (location.href = `${base(ws)}/pages/${row.ref.id}/markdown`);
+        return location.assign(`${base(ws)}/pages/${row.ref.id}/markdown`);
       case 'delete':
         return void trashRow(row);
     }
@@ -384,6 +389,7 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
                 }
               }}
               onNewPage={() => void newPage(row.projectId, row.ref.kind === 'folder' ? row.ref.id : null)}
+              pinned={isPinned(pinList, row.ref.kind, row.ref.id)}
             />
           ))}
         </div>
@@ -447,6 +453,7 @@ function TreeRow({
   onAction,
   onRename,
   onNewPage,
+  pinned,
 }: {
   row: Row;
   ws: string;
@@ -463,6 +470,7 @@ function TreeRow({
   onAction: (a: ItemAction) => void;
   onRename: (name: string | null) => void;
   onNewPage: () => void;
+  pinned: boolean;
 }) {
   const drag = useDraggable({ id: row.key, disabled: renaming });
   const dropTarget = useDroppable({ id: row.key });
@@ -474,7 +482,7 @@ function TreeRow({
   const kindLabel = row.ref.kind === 'page' ? 'Page' : row.ref.kind === 'folder' ? 'Folder' : 'Project';
 
   return (
-    <ItemContextMenu kind={row.ref.kind as ItemKind} onAction={onAction}>
+    <ItemContextMenu kind={row.ref.kind as ItemKind} onAction={onAction} pinned={pinned}>
       <div
         ref={setRef}
         role="treeitem"
@@ -562,7 +570,7 @@ function TreeRow({
                   <Ellipsis className="size-3.5" strokeWidth={1.75} aria-hidden />
                 </button>
               </DropdownMenu.Trigger>
-              <ItemDropdownContent kind={row.ref.kind as ItemKind} onAction={onAction} />
+              <ItemDropdownContent kind={row.ref.kind as ItemKind} onAction={onAction} pinned={pinned} />
             </DropdownMenu.Root>
           </span>
         )}

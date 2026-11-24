@@ -351,6 +351,19 @@ Hono app (one codebase)
 - **Docker** is verified in GitHub Actions (`.github/workflows/ci.yml`): the image builds, runs, passes `pnpm smoke --full`, and keeps its data and `NOTEY_SECRET` across a restart. The runtime image holds only `@libsql/client` beside the bundles.
 - The libSQL adapter uses `drizzle-orm/libsql/web`, which takes any client and never imports native libSQL, so serverless bundles stay portable.
 
+**M2 (2026-11-24)**
+- Repeat rules are a small RRULE subset of our own (`src/shared/recurrence.ts`: DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY incl. `-1FR`, BYMONTHDAY, COUNT, UNTIL). The `rrule` package is BSD-3, which isn't on the allowed list. Day 31 clamps to the month's last day; 29 Feb to 28 Feb.
+- Rules are stored anchor-independent (a weekly rule always carries BYDAY, a monthly one BYMONTHDAY), so editing the due date never shifts the pattern by surprise.
+- Completing a repeating task logs a `task_completion` and moves the due date to the next occurrence **on or after today**, so a task left overdue for a week doesn't come back as a pile of missed copies. COUNT counts down per completion. Undo restores the previous date.
+- "Today" and "overdue" use the device's calendar day, sent with each request, not the server's clock.
+- Quick add parses dates with `chrono-node` (MIT), loaded on first focus of the field, plus our own patterns for repeats ("every weekday", "every last friday", "every month on 1st"). It shows what it understood before Enter.
+- A completed row stays checked for 1.2 s with an Undo toast, then leaves the list. Board's Done column lists the last 14 days.
+- A `/task` block stores only the task id. `content_md` renders it as `- [ ] title` with the live title and state, and the host page's Markdown is rewritten when the task changes.
+- Pins point at an id and hide while their item is in Trash; permanent delete removes them. Project pins show done/total. Home shows up to 6 pins, the first as the lime signal card.
+- Task rows below 600 px put date and repeat under the title and move the pin star into the details sheet.
+- The "Connect an AI" starter card on Home waits for M4, where it has something to connect to.
+- BlockNote's "Toggle heading" slash items are hidden: Markdown has no toggle heading, so they wouldn't round-trip.
+
 ## 14. Open questions
 
 - **Fonts:** Inter and JetBrains Mono are licensed OFL-1.1, which isn't on the CLAUDE.md allowed list (MIT, MPL-2.0, Apache-2.0, ISC). M0 names them in the font stack but bundles no font files, so browsers fall back to the system UI font. Allow OFL for fonts, or pick a font under an allowed license?

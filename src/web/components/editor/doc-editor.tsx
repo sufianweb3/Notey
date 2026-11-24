@@ -21,7 +21,7 @@ import {
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { useQueryClient } from '@tanstack/react-query';
-import { FileText, Info, Network, Palette, Sigma, SquareFunction } from 'lucide-react';
+import { FileText, Info, ListChecks, Network, Palette, Sigma, SquareFunction } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { Block } from '@shared/blocks';
@@ -57,8 +57,16 @@ async function upload(ws: string, file: File): Promise<string> {
 // ── Slash menu ──────────────────────────────────────────────────────────────
 
 function slashItems(editor: NoteyEditor): DefaultReactSuggestionItem[] {
-  const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/video|audio/i.test(i.title));
+  const defaults = getDefaultReactSlashMenuItems(editor).filter((i) => !/video|audio|toggle heading/i.test(i.title));
   const custom: DefaultReactSuggestionItem[] = [
+    {
+      title: 'Task',
+      subtext: 'A real task, also in Tasks (a checklist stays in the doc)',
+      aliases: ['task', 'todo', 'to-do', 'action'],
+      group: 'Basic blocks',
+      icon: <ListChecks size={18} strokeWidth={1.5} />,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'task' }),
+    },
     {
       title: 'Callout',
       subtext: 'Highlight a note, tip or warning',

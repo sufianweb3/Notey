@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient, type QueryClient } from '@ta
 import type {
   FolderNode,
   ItemKind,
+  TrashKind,
   MoveInput,
   PageDetail,
   PageNode,
@@ -116,15 +117,15 @@ export function useContentMutations(ws: string) {
       onSuccess: refreshTree,
     }),
     trash: useMutation({
-      mutationFn: (input: { kind: ItemKind; id: string }) => api(`${base(ws)}/trash`, { body: input }),
+      mutationFn: (input: { kind: TrashKind; id: string }) => api(`${base(ws)}/trash`, { body: input }),
       onSuccess: refreshAll,
     }),
     restore: useMutation({
-      mutationFn: (input: { kind: ItemKind; id: string }) => api(`${base(ws)}/trash/restore`, { body: input }),
+      mutationFn: (input: { kind: TrashKind; id: string }) => api(`${base(ws)}/trash/restore`, { body: input }),
       onSuccess: refreshAll,
     }),
     deleteForever: useMutation({
-      mutationFn: (input: { kind: ItemKind; id: string }) => api(`${base(ws)}/trash/delete`, { body: input }),
+      mutationFn: (input: { kind: TrashKind; id: string }) => api(`${base(ws)}/trash/delete`, { body: input }),
       onSuccess: () => qc.invalidateQueries({ queryKey: ck.trash(ws) }),
     }),
   };

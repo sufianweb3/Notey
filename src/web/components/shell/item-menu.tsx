@@ -1,16 +1,16 @@
-import { ArrowRightLeft, Copy, Download, FilePlus, FolderPlus, Link2, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Copy, Download, FilePlus, FolderPlus, Link2, Pencil, Star, Trash2 } from 'lucide-react';
 import { ContextMenu, DropdownMenu } from 'radix-ui';
 import type { ReactNode } from 'react';
 import type { ItemKind } from '@shared/schemas';
 import { cn } from '@web/lib/cn';
 import { modKey } from '@web/lib/workspace-memory';
 
-export type ItemAction = 'newPage' | 'newFolder' | 'rename' | 'duplicate' | 'move' | 'copyLink' | 'markdown' | 'delete';
+export type ItemAction = 'newPage' | 'newFolder' | 'rename' | 'duplicate' | 'move' | 'pin' | 'copyLink' | 'markdown' | 'delete';
 
 const ACTIONS: Record<ItemKind, ItemAction[][]> = {
-  project: [['newPage', 'newFolder'], ['rename'], ['delete']],
-  folder: [['newPage', 'newFolder'], ['rename', 'move'], ['delete']],
-  page: [['rename', 'duplicate', 'move'], ['copyLink', 'markdown'], ['delete']],
+  project: [['newPage', 'newFolder'], ['rename', 'pin'], ['delete']],
+  folder: [['newPage', 'newFolder'], ['rename', 'move', 'pin'], ['delete']],
+  page: [['rename', 'duplicate', 'move', 'pin'], ['copyLink', 'markdown'], ['delete']],
 };
 
 const META: Record<ItemAction, { label: string; icon: ReactNode; hint?: string; danger?: boolean }> = {
@@ -19,6 +19,7 @@ const META: Record<ItemAction, { label: string; icon: ReactNode; hint?: string; 
   rename: { label: 'Rename', icon: <Pencil />, hint: 'F2' },
   duplicate: { label: 'Duplicate', icon: <Copy /> },
   move: { label: 'Move to…', icon: <ArrowRightLeft /> },
+  pin: { label: 'Pin', icon: <Star /> },
   copyLink: { label: 'Copy link', icon: <Link2 /> },
   markdown: { label: 'Download Markdown', icon: <Download /> },
   delete: { label: 'Move to Trash', icon: <Trash2 />, hint: 'Del', danger: true },
@@ -32,18 +33,21 @@ export const menuItemClass = cn(
 );
 
 type Prims = typeof ContextMenu | typeof DropdownMenu;
+type MenuProps = { kind: ItemKind; onAction: (a: ItemAction) => void; pinned?: boolean };
 
-function Items({ P, kind, onAction }: { P: Prims; kind: ItemKind; onAction: (a: ItemAction) => void }) {
+function Items({ P, kind, onAction, pinned }: MenuProps & { P: Prims }) {
   return ACTIONS[kind].map((group, gi) => (
     <div key={gi} role="none">
       {gi > 0 && <P.Separator className="my-1 h-hairline bg-border" />}
       {group.map((a) => {
         const m = META[a];
+        const label = a === 'pin' && pinned ? 'Unpin' : m.label;
+        const hint = a === 'pin' && kind === 'page' ? `${modKey}⇧P` : m.hint;
         return (
           <P.Item key={a} className={cn(menuItemClass, m.danger && 'text-error')} onSelect={() => onAction(a)}>
-            <span className={m.danger ? '' : 'text-on-surface-muted'}>{m.icon}</span>
-            <span className="flex-1">{m.label}</span>
-            {m.hint && <kbd className="font-sans text-meta text-on-surface-subtle">{m.hint === 'mod' ? modKey : m.hint}</kbd>}
+            <span className={m.danger ? '' : 'text-on-surface-muted'}>{a === 'pin' && pinned ? <Star className="fill-current" /> : m.icon}</span>
+            <span className="flex-1">{label}</span>
+            {hint && <kbd className="font-sans text-meta text-on-surface-subtle">{hint}</kbd>}
           </P.Item>
         );
       })}
@@ -51,32 +55,24 @@ function Items({ P, kind, onAction }: { P: Prims; kind: ItemKind; onAction: (a: 
   ));
 }
 
-export function ItemContextMenu({
-  kind,
-  onAction,
-  children,
-}: {
-  kind: ItemKind;
-  onAction: (a: ItemAction) => void;
-  children: ReactNode;
-}) {
+export function ItemContextMenu({ children, ...props }: MenuProps & { children: ReactNode }) {
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className={menuContentClass} collisionPadding={8}>
-          <Items P={ContextMenu} kind={kind} onAction={onAction} />
+          <Items P={ContextMenu} {...props} />
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>
   );
 }
 
-export function ItemDropdownContent({ kind, onAction }: { kind: ItemKind; onAction: (a: ItemAction) => void }) {
+export function ItemDropdownContent(props: MenuProps) {
   return (
     <DropdownMenu.Portal>
       <DropdownMenu.Content className={menuContentClass} align="start" sideOffset={4} collisionPadding={8}>
-        <Items P={DropdownMenu} kind={kind} onAction={onAction} />
+        <Items P={DropdownMenu} {...props} />
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   );

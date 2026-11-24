@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { CircleAlert, FileText, Folder, Layers, Trash2 } from 'lucide-react';
+import { CircleAlert, FileText, Folder, Layers, SquareCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { TrashItem } from '@shared/schemas';
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_app/w/$workspaceId/trash')({
   component: TrashView,
 });
 
-const ICON = { project: Layers, folder: Folder, page: FileText };
+const ICON = { project: Layers, folder: Folder, page: FileText, task: SquareCheck };
 const PURGE_DAYS = 30;
 
 function TrashView() {

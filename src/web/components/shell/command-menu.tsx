@@ -1,18 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { FilePlus, FileText, FolderPlus, Home, Keyboard, PanelLeft, Search, SunMoon, Trash2 } from 'lucide-react';
+import { CircleCheck, FilePlus, FileText, FolderPlus, Home, Keyboard, ListPlus, PanelLeft, Search, SquareCheck, Star, SunMoon, Trash2 } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
 import { Fragment, useDeferredValue, useEffect, useState, type ReactNode } from 'react';
 import type { SearchHit, Workspace } from '@shared/schemas';
 import { WorkspaceGlyph } from '@web/components/ui/glyph';
 import { cn } from '@web/lib/cn';
 import { pageTitle, searchQuery, treeQuery } from '@web/lib/content';
+import { openTask } from '@web/lib/tasks';
 import { modKey } from '@web/lib/workspace-memory';
 
 export type CommandActions = {
   newPage: () => void;
   newProject: () => void;
+  newTask: () => void;
   toggleSidebar: () => void;
   toggleTheme: () => void;
   showShortcuts: () => void;
@@ -108,17 +110,26 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
   };
   const openPage = (hit: SearchHit, newTab: boolean) => {
     if (!ws) return;
+    if (hit.kind === 'task') return run(() => openTask(hit.id));
     if (newTab) window.open(`/w/${ws}/p/${hit.id}`, '_blank', 'noopener');
     else run(() => void navigate({ to: '/w/$workspaceId/p/$pageId', params: { workspaceId: ws, pageId: hit.id } }));
   };
-  const projectName = (id: string) => tree?.projects.find((p) => p.id === id)?.name ?? '';
+  const projectName = (id: string | null) => (id ? (tree?.projects.find((p) => p.id === id)?.name ?? '') : 'Inbox');
 
   const commands: { value: string; label: string; icon: ReactNode; hint?: string; fn: () => void }[] = [
     { value: 'new doc page', label: 'New doc', icon: <FilePlus />, hint: `${modKey}N`, fn: actions.newPage },
+    { value: 'new task todo', label: 'New task', icon: <ListPlus />, hint: 'T', fn: actions.newTask },
     { value: 'new project', label: 'New project', icon: <FolderPlus />, fn: actions.newProject },
     ...(ws
       ? [
           { value: 'go home', label: 'Go to Home', icon: <Home />, fn: () => void navigate({ to: '/w/$workspaceId', params: { workspaceId: ws } }) },
+          {
+            value: 'go tasks today inbox upcoming',
+            label: 'Go to Tasks',
+            icon: <SquareCheck />,
+            fn: () => void navigate({ to: '/w/$workspaceId/tasks', params: { workspaceId: ws }, search: { view: 'today', layout: 'list' } }),
+          },
+          { value: 'go important pins pinned', label: 'Go to Important', icon: <Star />, fn: () => void navigate({ to: '/w/$workspaceId/important', params: { workspaceId: ws } }) },
           { value: 'go trash deleted', label: 'Go to Trash', icon: <Trash2 />, fn: () => void navigate({ to: '/w/$workspaceId/trash', params: { workspaceId: ws } }) },
         ]
       : []),
@@ -159,7 +170,7 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
           {!ws ? null : search.isError ? (
             <p className="px-3 py-6 text-center text-body text-on-surface-muted">Couldn't search. Check your connection and try again.</p>
           ) : (
-            <Command.Group heading={query ? 'Pages' : 'Recent pages'} className={groupClass}>
+            <Command.Group heading={query ? 'Pages and tasks' : 'Recent pages'} className={groupClass}>
               {search.data?.map((hit) => (
                 <Command.Item
                   key={hit.id}
@@ -168,9 +179,11 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
                   onSelect={() => openPage(hit, false)}
                   className={itemClass}
                 >
-                  <FileText />
+                  {hit.kind === 'task' ? hit.status === 'done' ? <CircleCheck /> : <SquareCheck /> : <FileText />}
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate">{pageTitle(hit)}</span>
+                    <span className={hit.status === 'done' ? 'truncate text-on-surface-subtle line-through' : 'truncate'}>
+                      {hit.kind === 'task' ? hit.title : pageTitle(hit)}
+                    </span>
                     {query && hit.snippet ? (
                       <span className="truncate text-meta text-on-surface-muted">
                         <Snippet text={hit.snippet} />
@@ -182,7 +195,7 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
                 </Command.Item>
               ))}
               {query && search.isSuccess && search.data.length === 0 && (
-                <p className="px-3 py-2 text-body text-on-surface-muted">No pages match “{query}”.</p>
+                <p className="px-3 py-2 text-body text-on-surface-muted">Nothing matches “{query}”.</p>
               )}
             </Command.Group>
           )}

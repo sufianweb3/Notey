@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import { House, Layers, PanelLeft, PanelLeftClose, Search, Settings, Trash2 } from 'lucide-react';
+import { House, Layers, PanelLeft, PanelLeftClose, Search, Settings, SquareCheck, Star, Trash2 } from 'lucide-react';
 import { Dialog as D, Tooltip } from 'radix-ui';
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -12,6 +12,10 @@ import { useLiveRefresh } from '@web/lib/live';
 import { cycleTheme, PREF, setPref, SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN, usePref } from '@web/lib/prefs';
 import { workspacesQuery } from '@web/lib/queries';
 import { useShortcuts } from '@web/lib/shortcuts';
+import { countsQuery, isPinned, pinsQuery, today, usePins } from '@web/lib/tasks';
+import { QuickAdd } from '@web/components/tasks/quick-add';
+import { TaskSheet } from '@web/components/tasks/task-sheet';
+import { Dialog } from '@web/components/ui/dialog';
 import { lastWorkspace, modKey, rememberWorkspace } from '@web/lib/workspace-memory';
 import { CommandMenu } from './command-menu';
 import { NameDialog } from './name-dialog';
@@ -19,9 +23,9 @@ import { ProjectTree } from './project-tree';
 import { ShortcutSheet } from './shortcut-sheet';
 import { WorkspaceSwitcher } from './workspace-switcher';
 
-type ShellActions = { openSearch: () => void; newPage: () => void; newProject: () => void };
-const ShellContext = createContext<ShellActions>({ openSearch: () => {}, newPage: () => {}, newProject: () => {} });
-/** Shell-level actions (search, new page, new project) for screens inside the shell. */
+type ShellActions = { openSearch: () => void; newPage: () => void; newProject: () => void; newTask: () => void };
+const ShellContext = createContext<ShellActions>({ openSearch: () => {}, newPage: () => {}, newProject: () => {}, newTask: () => {} });
+/** Shell-level actions (search, new page, new project, new task) for screens inside the shell. */
 export const useShell = () => useContext(ShellContext);
 
 function useMedia(query: string) {
@@ -61,6 +65,24 @@ function RailTip({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+/** Tasks due today or overdue: the one count that gets the lime badge (DESIGN.md § Nav item). */
+function TodayBadge({ ws, rail }: { ws: string; rail?: boolean }) {
+  const { data } = useQuery(countsQuery(ws, today()));
+  const n = data?.today ?? 0;
+  if (!n) return null;
+  return (
+    <span
+      aria-label={`${n} due today`}
+      className={cn(
+        'tnum grid min-w-5 place-items-center rounded-sm bg-accent px-1.5 text-meta font-medium text-on-accent',
+        rail && 'absolute -top-1 -right-1 min-w-4 px-1 text-[length:var(--text-meta)] leading-4',
+      )}
+    >
+      {n > 99 ? '99+' : n}
+    </span>
+  );
+}
+
 /** The sidebar body, shared by the full sidebar, the rail's peek panel and the compact sheet. */
 function SidebarBody({
   ws,
@@ -87,10 +109,21 @@ function SidebarBody({
           <kbd className="font-sans text-meta text-on-surface-subtle">{modKey}K</kbd>
         </button>
         {ws && (
-          <Link to="/w/$workspaceId" params={{ workspaceId: ws }} activeOptions={{ exact: true }} className={navClass} onClick={onNavigate}>
-            <House aria-hidden />
-            Home
-          </Link>
+          <>
+            <Link to="/w/$workspaceId" params={{ workspaceId: ws }} activeOptions={{ exact: true }} className={navClass} onClick={onNavigate}>
+              <House aria-hidden />
+              Home
+            </Link>
+            <Link to="/w/$workspaceId/important" params={{ workspaceId: ws }} className={navClass} onClick={onNavigate}>
+              <Star aria-hidden />
+              Important
+            </Link>
+            <Link to="/w/$workspaceId/tasks" params={{ workspaceId: ws }} search={{ view: 'today', layout: 'list' }} className={cn(navClass, 'group')} onClick={onNavigate}>
+              <SquareCheck aria-hidden />
+              <span className="flex-1">Tasks</span>
+              <TodayBadge ws={ws} />
+            </Link>
+          </>
         )}
       </nav>
       <div className="-mx-2 min-h-0 flex-1 overflow-y-auto px-2">{ws && <ProjectTree ws={ws} onNavigate={onNavigate} />}</div>
@@ -191,11 +224,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }
 
+  // Quick add (T): into the open page's project, else the Inbox.
+  const [quickAdd, setQuickAdd] = useState(false);
+  const pageProject = tree?.pages.find((p) => p.id === params.pageId)?.projectId ?? null;
+  const pinsApi = usePins(ws ?? '');
+  const { data: pins } = useQuery({ ...pinsQuery(ws ?? ''), enabled: !!ws });
+  const togglePagePin = () => {
+    if (!ws || !params.pageId) return;
+    pinsApi.toggle.mutate({ itemType: 'page', itemId: params.pageId, pinned: isPinned(pins, 'page', params.pageId) });
+  };
+
   useShortcuts([
     { combo: 'mod+k', handler: () => setCmdOpen((o) => !o) },
     { combo: 'mod+n', handler: () => void newPage() },
     { combo: 'mod+\\', handler: toggleSidebar },
     { combo: '?', handler: () => setShortcutsOpen(true) },
+    { combo: 't', handler: () => ws && setQuickAdd(true) },
+    { combo: 'mod+shift+p', handler: togglePagePin },
     ...workspaces.slice(0, 9).map((w, i) => ({
       combo: `mod+${i + 1}`,
       handler: () => void navigate({ to: '/w/$workspaceId', params: { workspaceId: w.id } }),
@@ -213,7 +258,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ShellContext.Provider value={{ openSearch: () => setCmdOpen(true), newPage: () => void newPage(), newProject: () => setNewProjectThenPage(true) }}>
+    <ShellContext.Provider
+      value={{ openSearch: () => setCmdOpen(true), newPage: () => void newPage(), newProject: () => setNewProjectThenPage(true), newTask: () => setQuickAdd(true) }}
+    >
     <Tooltip.Provider>
       <div className="flex h-dvh overflow-hidden bg-neutral">
         {mode === 'full' && (
@@ -244,11 +291,24 @@ export function AppShell({ children }: { children: ReactNode }) {
               </button>
             </RailTip>
             {ws && (
-              <RailTip label="Home">
-                <Link to="/w/$workspaceId" params={{ workspaceId: ws }} activeOptions={{ exact: true }} className={railButton} aria-label="Home">
-                  <House aria-hidden />
-                </Link>
-              </RailTip>
+              <>
+                <RailTip label="Home">
+                  <Link to="/w/$workspaceId" params={{ workspaceId: ws }} activeOptions={{ exact: true }} className={railButton} aria-label="Home">
+                    <House aria-hidden />
+                  </Link>
+                </RailTip>
+                <RailTip label="Important">
+                  <Link to="/w/$workspaceId/important" params={{ workspaceId: ws }} className={railButton} aria-label="Important">
+                    <Star aria-hidden />
+                  </Link>
+                </RailTip>
+                <RailTip label="Tasks">
+                  <Link to="/w/$workspaceId/tasks" params={{ workspaceId: ws }} search={{ view: 'today', layout: 'list' }} className={cn(railButton, 'relative')} aria-label="Tasks">
+                    <SquareCheck aria-hidden />
+                    <TodayBadge ws={ws} rail />
+                  </Link>
+                </RailTip>
+              </>
             )}
             <RailTip label="Projects">
               <button type="button" className={railButton} aria-label="Projects" aria-expanded={peek} onClick={() => setPeek((p) => !p)}>
@@ -324,6 +384,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         workspaces={workspaces}
         actions={{
           newPage: () => void newPage(),
+          newTask: () => setQuickAdd(true),
           newProject: () => setNewProjectThenPage(true),
           toggleSidebar,
           toggleTheme: () => {
@@ -334,6 +395,25 @@ export function AppShell({ children }: { children: ReactNode }) {
         }}
       />
       <ShortcutSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <TaskSheet ws={ws} />
+      {ws && (
+        <Dialog
+          open={quickAdd}
+          onOpenChange={setQuickAdd}
+          title="New task"
+          description={pageProject ? `Adds to ${tree?.projects.find((p) => p.id === pageProject)?.name ?? 'this project'}.` : 'Adds to the Inbox. Dates and repeats in plain words work.'}
+        >
+          <QuickAdd
+            ws={ws}
+            projectId={pageProject}
+            autoFocus
+            onCreated={() => {
+              setQuickAdd(false);
+              toast('Task added');
+            }}
+          />
+        </Dialog>
+      )}
       <NameDialog
         open={newProjectThenPage}
         onOpenChange={setNewProjectThenPage}

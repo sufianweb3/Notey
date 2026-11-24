@@ -33,7 +33,12 @@ export function useLiveRefresh(ws: string | undefined) {
           void qc.invalidateQueries({ queryKey: ck.tree(ws!) });
           void qc.invalidateQueries({ queryKey: ck.trash(ws!) });
           void qc.invalidateQueries({ queryKey: ['ws', ws, 'search'] });
+          if (res.changes.some((c) => c.entity === 'task' || c.entity === 'project')) {
+            void qc.invalidateQueries({ queryKey: ['ws', ws, 'tasks'] });
+          }
+          void qc.invalidateQueries({ queryKey: ['ws', ws, 'pins'] });
           for (const change of res.changes) {
+            if (change.entity === 'task') void qc.invalidateQueries({ queryKey: ['ws', ws, 'task', change.entityId] });
             if (change.entity === 'page') {
               void qc.invalidateQueries({ queryKey: ck.versions(ws!, change.entityId) });
               window.dispatchEvent(new CustomEvent<PageChangedDetail>(PAGE_CHANGED, { detail: { ws: ws!, pageId: change.entityId, change } }));

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { CloudOff, Ellipsis, History, TriangleAlert } from 'lucide-react';
+import { CloudOff, Ellipsis, History, Star, TriangleAlert } from 'lucide-react';
 import { DropdownMenu, Popover } from 'radix-ui';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,6 +16,9 @@ import { api, ApiError, errorMessage } from '@web/lib/api';
 import { base, ck, pageQuery, pageTitle, patchTree, pathOf, treeQuery, useContentMutations } from '@web/lib/content';
 import { DocEditorSlot, loadEditor } from '@web/lib/editor-loader';
 import { setPageTitles } from '@web/lib/page-titles';
+import { isPinned, pinsQuery, usePins } from '@web/lib/tasks';
+import { cn } from '@web/lib/cn';
+import { modKey } from '@web/lib/workspace-memory';
 import { workspacesQuery } from '@web/lib/queries';
 import { editedByLabel, relativeTime } from '@web/lib/time';
 
@@ -86,6 +89,10 @@ function PageView() {
   const [history, setHistory] = useState(false);
   const [moving, setMoving] = useState(false);
   const editor = useRef<EditorHandle>(null);
+  const pinsApi = usePins(ws);
+  const { data: pinList } = useQuery(pinsQuery(ws));
+  const pinned = isPinned(pinList, 'page', pageId);
+  const togglePin = () => pinsApi.toggle.mutate({ itemType: 'page', itemId: pageId, pinned });
   // Enter in the title before the editor chunk has loaded: focus it once it mounts.
   const pendingFocus = useRef(false);
   const focusEditor = () => {
@@ -116,10 +123,12 @@ function PageView() {
         });
       case 'move':
         return setMoving(true);
+      case 'pin':
+        return togglePin();
       case 'copyLink':
         return void navigator.clipboard.writeText(location.href).then(() => toast('Link copied'), () => toast.error("Couldn't copy the link."));
       case 'markdown':
-        return void (location.href = `${base(ws)}/pages/${pageId}/markdown`);
+        return location.assign(`${base(ws)}/pages/${pageId}/markdown`);
       case 'delete':
         return m.trash.mutate(
           { kind: 'page', id: pageId },
@@ -144,6 +153,17 @@ function PageView() {
         status={<SaveStatus state={saveState} />}
         actions={
           <>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={pinned ? 'Unpin page' : 'Pin page'}
+              aria-pressed={pinned}
+              title={`${pinned ? 'Unpin' : 'Pin'} (${modKey}⇧P)`}
+              onClick={togglePin}
+              className={pinned ? 'text-on-surface' : undefined}
+            >
+              <Star className={cn('size-4.5', pinned && 'fill-current')} strokeWidth={1.5} aria-hidden />
+            </Button>
             <Button size="icon" variant="ghost" aria-label="Page history" title="Page history" onClick={() => setHistory(true)}>
               <History className="size-4.5" strokeWidth={1.5} aria-hidden />
             </Button>
@@ -153,7 +173,7 @@ function PageView() {
                   <Ellipsis className="size-4.5" strokeWidth={1.5} aria-hidden />
                 </Button>
               </DropdownMenu.Trigger>
-              <ItemDropdownContent kind="page" onAction={act} />
+              <ItemDropdownContent kind="page" onAction={act} pinned={pinned} />
             </DropdownMenu.Root>
           </>
         }

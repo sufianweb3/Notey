@@ -7,6 +7,7 @@ import {
   defaultInlineContentSpecs,
 } from '@blocknote/core';
 import { Callout, InlineMath, MathBlock, MermaidBlock, PageLink } from './blocks';
+import { TaskBlock } from './task-block';
 
 // PRD 6.3 block set: no video or audio blocks, headings H1–H3 only.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -20,6 +21,7 @@ export const schema = BlockNoteSchema.create({
     callout: Callout(),
     math: MathBlock(),
     mermaid: MermaidBlock(),
+    task: TaskBlock(),
   },
   inlineContentSpecs: {
     ...defaultInlineContentSpecs,

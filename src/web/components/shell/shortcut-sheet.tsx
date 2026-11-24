@@ -4,6 +4,8 @@ import { modKey } from '@web/lib/workspace-memory';
 const ROWS: [string, string][] = [
   [`${modKey}K`, 'Search and commands'],
   [`${modKey}N`, 'New page'],
+  ['T', 'Quick add a task'],
+  [`${modKey}⇧P`, 'Pin or unpin the open page'],
   [`${modKey}\\`, 'Collapse or expand the sidebar'],
   [`${modKey}1 – ${modKey}9`, 'Switch workspace'],
   ['↑ ↓ ← →', 'Move around the page tree'],

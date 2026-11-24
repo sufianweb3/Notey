@@ -1,5 +1,5 @@
 import { Dialog as D } from 'radix-ui';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { cn } from '@web/lib/cn';
 
 type DialogProps = {
@@ -13,11 +13,18 @@ type DialogProps = {
 
 /** Level 3: ring + shadow-3 + scrim. Bottom-aligned sheet on compact screens. */
 export function Dialog({ open, onOpenChange, title, description, children, className }: DialogProps) {
+  const content = useRef<HTMLDivElement>(null);
+  // Closing animates for 150 ms; keys typed meanwhile must not land in the
+  // closing dialog's input (e.g. the T that opens quick add again).
+  useEffect(() => {
+    if (!open && content.current?.contains(document.activeElement)) (document.activeElement as HTMLElement).blur();
+  }, [open]);
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
         <D.Overlay className="animate-scrim fixed inset-0 z-40 bg-scrim" />
         <D.Content
+          ref={content}
           className={cn(
             'animate-dialog fixed z-50 flex flex-col gap-4 bg-surface-raised text-on-surface shadow-3 ring-1 ring-border',
             'inset-x-0 bottom-0 rounded-t-xl p-6 pb-[max(var(--spacing-6),env(safe-area-inset-bottom))]',

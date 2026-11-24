@@ -89,6 +89,7 @@
   --duration-popover: 180ms;
   --duration-dialog: 200ms;
   --duration-scrim: 150ms;
+  --duration-check: 220ms;
   color-scheme: light;
 }
 
@@ -278,15 +279,38 @@
     transform: translateX(100%);
   }
 }
-.sheet-left[data-state='open'] {
-  animation: slide-in-left 320ms var(--ease-drawer);
+@keyframes slide-in-bottom {
+  from {
+    transform: translateY(100%);
+  }
 }
-.sheet-left[data-state='closed'] {
-  animation: slide-out-left 200ms var(--ease-drawer);
+@keyframes slide-out-bottom {
+  to {
+    transform: translateY(100%);
+  }
 }
-.sheet-right[data-state='open'] {
-  animation: slide-in-right 320ms var(--ease-drawer);
+/* Sheets (DESIGN.md § Motion: 320 ms on the drawer curve, exits faster). Utilities, so they take breakpoints. */
+@utility sheet-left {
+  &[data-state='open'] {
+    animation: slide-in-left 320ms var(--ease-drawer);
+  }
+  &[data-state='closed'] {
+    animation: slide-out-left 200ms var(--ease-drawer);
+  }
 }
-.sheet-right[data-state='closed'] {
-  animation: slide-out-right 200ms var(--ease-drawer);
+@utility sheet-right {
+  &[data-state='open'] {
+    animation: slide-in-right 320ms var(--ease-drawer);
+  }
+  &[data-state='closed'] {
+    animation: slide-out-right 200ms var(--ease-drawer);
+  }
+}
+@utility sheet-bottom {
+  &[data-state='open'] {
+    animation: slide-in-bottom 320ms var(--ease-drawer);
+  }
+  &[data-state='closed'] {
+    animation: slide-out-bottom 200ms var(--ease-drawer);
+  }
 }

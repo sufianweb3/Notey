@@ -16,6 +16,8 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppSettingsWorkspacesRouteImport } from './routes/_app/settings.workspaces'
 import { Route as AppWWorkspaceIdRouteImport } from './routes/_app/w.$workspaceId'
 import { Route as AppWWorkspaceIdIndexRouteImport } from './routes/_app/w.$workspaceId.index'
+import { Route as AppWWorkspaceIdImportantRouteImport } from './routes/_app/w.$workspaceId.important'
+import { Route as AppWWorkspaceIdTasksRouteImport } from './routes/_app/w.$workspaceId.tasks'
 import { Route as AppWWorkspaceIdTrashRouteImport } from './routes/_app/w.$workspaceId.trash'
 import { Route as AppWWorkspaceIdPPageIdRouteImport } from './routes/_app/w.$workspaceId.p.$pageId'
 
@@ -53,6 +55,17 @@ const AppWWorkspaceIdIndexRoute = AppWWorkspaceIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppWWorkspaceIdRoute,
 } as any)
+const AppWWorkspaceIdImportantRoute =
+  AppWWorkspaceIdImportantRouteImport.update({
+    id: '/important',
+    path: '/important',
+    getParentRoute: () => AppWWorkspaceIdRoute,
+  } as any)
+const AppWWorkspaceIdTasksRoute = AppWWorkspaceIdTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AppWWorkspaceIdRoute,
+} as any)
 const AppWWorkspaceIdTrashRoute = AppWWorkspaceIdTrashRouteImport.update({
   id: '/trash',
   path: '/trash',
@@ -70,6 +83,8 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/w/$workspaceId': typeof AppWWorkspaceIdRouteWithChildren
+  '/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
+  '/w/$workspaceId/tasks': typeof AppWWorkspaceIdTasksRoute
   '/w/$workspaceId/trash': typeof AppWWorkspaceIdTrashRoute
   '/w/$workspaceId/': typeof AppWWorkspaceIdIndexRoute
   '/w/$workspaceId/p/$pageId': typeof AppWWorkspaceIdPPageIdRoute
@@ -79,6 +94,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/settings/workspaces': typeof AppSettingsWorkspacesRoute
+  '/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
+  '/w/$workspaceId/tasks': typeof AppWWorkspaceIdTasksRoute
   '/w/$workspaceId/trash': typeof AppWWorkspaceIdTrashRoute
   '/w/$workspaceId': typeof AppWWorkspaceIdIndexRoute
   '/w/$workspaceId/p/$pageId': typeof AppWWorkspaceIdPPageIdRoute
@@ -91,6 +108,8 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_app/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/_app/w/$workspaceId': typeof AppWWorkspaceIdRouteWithChildren
+  '/_app/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
+  '/_app/w/$workspaceId/tasks': typeof AppWWorkspaceIdTasksRoute
   '/_app/w/$workspaceId/trash': typeof AppWWorkspaceIdTrashRoute
   '/_app/w/$workspaceId/': typeof AppWWorkspaceIdIndexRoute
   '/_app/w/$workspaceId/p/$pageId': typeof AppWWorkspaceIdPPageIdRoute
@@ -103,6 +122,8 @@ export interface FileRouteTypes {
     | '/setup'
     | '/settings/workspaces'
     | '/w/$workspaceId'
+    | '/w/$workspaceId/important'
+    | '/w/$workspaceId/tasks'
     | '/w/$workspaceId/trash'
     | '/w/$workspaceId/'
     | '/w/$workspaceId/p/$pageId'
@@ -112,6 +133,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/settings/workspaces'
+    | '/w/$workspaceId/important'
+    | '/w/$workspaceId/tasks'
     | '/w/$workspaceId/trash'
     | '/w/$workspaceId'
     | '/w/$workspaceId/p/$pageId'
@@ -123,6 +146,8 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_app/settings/workspaces'
     | '/_app/w/$workspaceId'
+    | '/_app/w/$workspaceId/important'
+    | '/_app/w/$workspaceId/tasks'
     | '/_app/w/$workspaceId/trash'
     | '/_app/w/$workspaceId/'
     | '/_app/w/$workspaceId/p/$pageId'
@@ -186,6 +211,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWWorkspaceIdIndexRouteImport
       parentRoute: typeof AppWWorkspaceIdRoute
     }
+    '/_app/w/$workspaceId/important': {
+      id: '/_app/w/$workspaceId/important'
+      path: '/important'
+      fullPath: '/w/$workspaceId/important'
+      preLoaderRoute: typeof AppWWorkspaceIdImportantRouteImport
+      parentRoute: typeof AppWWorkspaceIdRoute
+    }
+    '/_app/w/$workspaceId/tasks': {
+      id: '/_app/w/$workspaceId/tasks'
+      path: '/tasks'
+      fullPath: '/w/$workspaceId/tasks'
+      preLoaderRoute: typeof AppWWorkspaceIdTasksRouteImport
+      parentRoute: typeof AppWWorkspaceIdRoute
+    }
     '/_app/w/$workspaceId/trash': {
       id: '/_app/w/$workspaceId/trash'
       path: '/trash'
@@ -204,12 +243,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppWWorkspaceIdRouteChildren {
+  AppWWorkspaceIdImportantRoute: typeof AppWWorkspaceIdImportantRoute
+  AppWWorkspaceIdTasksRoute: typeof AppWWorkspaceIdTasksRoute
   AppWWorkspaceIdTrashRoute: typeof AppWWorkspaceIdTrashRoute
   AppWWorkspaceIdIndexRoute: typeof AppWWorkspaceIdIndexRoute
   AppWWorkspaceIdPPageIdRoute: typeof AppWWorkspaceIdPPageIdRoute
 }
 
 const AppWWorkspaceIdRouteChildren: AppWWorkspaceIdRouteChildren = {
+  AppWWorkspaceIdImportantRoute: AppWWorkspaceIdImportantRoute,
+  AppWWorkspaceIdTasksRoute: AppWWorkspaceIdTasksRoute,
   AppWWorkspaceIdTrashRoute: AppWWorkspaceIdTrashRoute,
   AppWWorkspaceIdIndexRoute: AppWWorkspaceIdIndexRoute,
   AppWWorkspaceIdPPageIdRoute: AppWWorkspaceIdPPageIdRoute,
