@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
 import * as svc from '../../src/server/services/workspace';
 import { agent, client, makeApp, makeDb, owner } from '../helpers';
 
-const PUBLIC = new Set(['GET /api/health', 'GET /api/setup', 'POST /api/setup', 'GET /api/auth/*', 'POST /api/auth/*']);
+// The OpenAPI spec describes the API, not anything in it, so it's public too.
+const PUBLIC = new Set(['GET /api/health', 'GET /api/setup', 'POST /api/setup', 'GET /api/auth/*', 'POST /api/auth/*', 'GET /api/v1/openapi.json']);
 
 describe('HTTP: every /api endpoint needs the owner session', () => {
   it('returns 401 without a session for every non-public route', async () => {

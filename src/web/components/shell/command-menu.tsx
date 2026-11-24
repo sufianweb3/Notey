@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { CircleCheck, FilePlus, FileText, FolderPlus, Home, Keyboard, ListPlus, PanelLeft, Search, Shapes, SquareCheck, Star, SunMoon, Trash2, Workflow } from 'lucide-react';
+import { CircleCheck, FilePlus, FileText, FolderPlus, Home, Keyboard, ListPlus, PanelLeft, Plug, Search, Shapes, SquareCheck, Star, SunMoon, Trash2, Workflow } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
 import { Fragment, useDeferredValue, useEffect, useState, type ReactNode } from 'react';
 import type { PageType, SearchHit, Workspace } from '@shared/schemas';
@@ -133,6 +133,7 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
           },
           { value: 'go important pins pinned', label: 'Go to Important', icon: <Star />, fn: () => void navigate({ to: '/w/$workspaceId/important', params: { workspaceId: ws } }) },
           { value: 'go trash deleted', label: 'Go to Trash', icon: <Trash2 />, fn: () => void navigate({ to: '/w/$workspaceId/trash', params: { workspaceId: ws } }) },
+          { value: 'ai access tokens connect claude chatgpt mcp api', label: 'AI access', icon: <Plug />, fn: () => void navigate({ to: '/settings/ai-access' }) },
         ]
       : []),
     { value: 'toggle sidebar', label: 'Toggle sidebar', icon: <PanelLeft />, hint: `${modKey}\\`, fn: actions.toggleSidebar },

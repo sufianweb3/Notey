@@ -233,6 +233,10 @@ Fevgo / Website / Homepage brief                ☆  ⋯   ✦ AI
    ⠿ +   (drag handle and + appear left of the hovered block)
 ```
 
+**Settings › AI access:** "Connect" shows two cards side by side (one column below 600 px): the connector URL for Claude.ai or ChatGPT with Copy, and tokens for Claude Code, Codex or scripts with a link to the OpenAPI reference. Below, "Tokens and connected apps" for one workspace (picker when there are several): a list with name, kind (Token / Connected app), scope, last used and created, and Revoke / Disconnect (confirmed in a dialog). "New token" asks for a name and Read or Read and write; the token is shown once in a dialog with Copy and ready-made commands (Claude Code, curl). Code lines use `font-mono` on `neutral`.
+
+**Connect (OAuth consent):** the sign-in layout. Title "Connect <app> to Notey", a line saying it sees one workspace and where you'll return, a radio list of workspaces, then Read / Read and write as two choice cards with a one-line explanation each. Allow is the primary button, Deny is ghost. Selected cards get the 2 px `primary` ring.
+
 **Important:** sections for Pages, Tasks, Folders and Projects. Cards for pages, rows for tasks. Drag to reorder. Empty state: "Pin anything with ☆ to keep it here."
 
 **Canvas / Mindmap:** full-bleed. The top bar stays, with a one-line title row under it. Paper `surface`, ink `on-surface`, grid dots at `border`.

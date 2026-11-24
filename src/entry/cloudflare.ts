@@ -9,6 +9,7 @@ interface Env {
   ASSETS: Fetcher;
   NOTEY_SECRET: string;
   PUBLIC_URL?: string;
+  NOTEY_TOKEN_RATE_LIMIT?: string;
 }
 
 // Static assets (the SPA) are served by Workers Assets before this runs; see
@@ -20,7 +21,7 @@ export default {
     app ??= createApp({
       db: d1Adapter(env.DB),
       storage: r2Adapter(env.FILES),
-      env: { NOTEY_SECRET: env.NOTEY_SECRET, PUBLIC_URL: env.PUBLIC_URL || undefined },
+      env: { NOTEY_SECRET: env.NOTEY_SECRET, PUBLIC_URL: env.PUBLIC_URL || undefined, NOTEY_TOKEN_RATE_LIMIT: env.NOTEY_TOKEN_RATE_LIMIT },
     });
     // Cloudflare sets cf-connecting-ip itself; clients can't override it.
     return app.fetch(withClientIp(request, request.headers.get('cf-connecting-ip')), env, ctx);

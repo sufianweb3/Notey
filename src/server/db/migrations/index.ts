@@ -61,5 +61,15 @@ export const migrations: Migration[] = [
       "CREATE INDEX IF NOT EXISTS `folder_parent_idx` ON `folder` (`workspace_id`, `parent_id`);",
       "CREATE INDEX IF NOT EXISTS `page_folder_idx` ON `page` (`workspace_id`, `folder_id`);"
     ]
+  },
+  {
+    "tag": "0003_dapper_black_tom",
+    "statements": [
+      "ALTER TABLE `api_token` ADD `rate_window` integer DEFAULT 0 NOT NULL;",
+      "ALTER TABLE `api_token` ADD `rate_count` integer DEFAULT 0 NOT NULL;",
+      "ALTER TABLE `api_token` ADD `client_id` text;",
+      "ALTER TABLE `oauth_grant` ADD `redirect_uri` text DEFAULT '' NOT NULL;",
+      "ALTER TABLE `oauth_grant` ADD `code_challenge` text DEFAULT '' NOT NULL;"
+    ]
   }
 ];

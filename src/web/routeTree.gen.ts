@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as AppSettingsAiAccessRouteImport } from './routes/_app/settings.ai-access'
 import { Route as AppSettingsWorkspacesRouteImport } from './routes/_app/settings.workspaces'
 import { Route as AppWWorkspaceIdRouteImport } from './routes/_app/w.$workspaceId'
 import { Route as AppWWorkspaceIdIndexRouteImport } from './routes/_app/w.$workspaceId.index'
@@ -30,6 +32,11 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -39,6 +46,11 @@ const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSettingsAiAccessRoute = AppSettingsAiAccessRouteImport.update({
+  id: '/settings/ai-access',
+  path: '/settings/ai-access',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsWorkspacesRoute = AppSettingsWorkspacesRouteImport.update({
   id: '/settings/workspaces',
@@ -79,8 +91,10 @@ const AppWWorkspaceIdPPageIdRoute = AppWWorkspaceIdPPageIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
+  '/settings/ai-access': typeof AppSettingsAiAccessRoute
   '/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/w/$workspaceId': typeof AppWWorkspaceIdRouteWithChildren
   '/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
@@ -91,8 +105,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
+  '/settings/ai-access': typeof AppSettingsAiAccessRoute
   '/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
   '/w/$workspaceId/tasks': typeof AppWWorkspaceIdTasksRoute
@@ -104,8 +120,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/connect': typeof ConnectRoute
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
+  '/_app/settings/ai-access': typeof AppSettingsAiAccessRoute
   '/_app/settings/workspaces': typeof AppSettingsWorkspacesRoute
   '/_app/w/$workspaceId': typeof AppWWorkspaceIdRouteWithChildren
   '/_app/w/$workspaceId/important': typeof AppWWorkspaceIdImportantRoute
@@ -118,8 +136,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/connect'
     | '/login'
     | '/setup'
+    | '/settings/ai-access'
     | '/settings/workspaces'
     | '/w/$workspaceId'
     | '/w/$workspaceId/important'
@@ -130,8 +150,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/connect'
     | '/login'
     | '/setup'
+    | '/settings/ai-access'
     | '/settings/workspaces'
     | '/w/$workspaceId/important'
     | '/w/$workspaceId/tasks'
@@ -142,8 +164,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/connect'
     | '/login'
     | '/setup'
+    | '/_app/settings/ai-access'
     | '/_app/settings/workspaces'
     | '/_app/w/$workspaceId'
     | '/_app/w/$workspaceId/important'
@@ -156,6 +180,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  ConnectRoute: typeof ConnectRoute
   LoginRoute: typeof LoginRoute
   SetupRoute: typeof SetupRoute
 }
@@ -176,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -189,6 +221,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/settings/ai-access': {
+      id: '/_app/settings/ai-access'
+      path: '/settings/ai-access'
+      fullPath: '/settings/ai-access'
+      preLoaderRoute: typeof AppSettingsAiAccessRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings/workspaces': {
       id: '/_app/settings/workspaces'
@@ -263,11 +302,13 @@ const AppWWorkspaceIdRouteWithChildren = AppWWorkspaceIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppSettingsAiAccessRoute: typeof AppSettingsAiAccessRoute
   AppSettingsWorkspacesRoute: typeof AppSettingsWorkspacesRoute
   AppWWorkspaceIdRoute: typeof AppWWorkspaceIdRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppSettingsAiAccessRoute: AppSettingsAiAccessRoute,
   AppSettingsWorkspacesRoute: AppSettingsWorkspacesRoute,
   AppWWorkspaceIdRoute: AppWWorkspaceIdRouteWithChildren,
 }
@@ -277,6 +318,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  ConnectRoute: ConnectRoute,
   LoginRoute: LoginRoute,
   SetupRoute: SetupRoute,
 }

@@ -7,7 +7,9 @@ import { needsSetup, runSetup } from '../../services/setup';
 import { errorJson, validationHook } from './errors';
 import { requireUser } from './middleware';
 import { contentRoutes } from './content';
+import { consentRoutes } from '../oauth';
 import { taskRoutes } from './tasks';
+import { tokenRoutes } from './tokens';
 import { workspaceRoutes } from './workspaces';
 
 export function apiRoutes(deps: Deps) {
@@ -54,6 +56,8 @@ export function apiRoutes(deps: Deps) {
 
   authed.route('/workspaces/:wsId', contentRoutes(deps));
   authed.route('/workspaces/:wsId', taskRoutes(deps));
+  authed.route('/workspaces/:wsId', tokenRoutes(deps));
+  authed.route('/oauth', consentRoutes(deps));
   authed.route('/workspaces', workspaceRoutes(deps));
 
   // Smoke test for the storage adapter on each host: write, read back, delete.

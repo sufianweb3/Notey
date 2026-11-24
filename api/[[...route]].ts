@@ -31,7 +31,7 @@ function database(): DbAdapter {
 const app = createApp({
   db: database(),
   storage: vercelBlobAdapter(blobToken),
-  env: { NOTEY_SECRET: env.NOTEY_SECRET ?? '', PUBLIC_URL: env.PUBLIC_URL || undefined },
+  env: { NOTEY_SECRET: env.NOTEY_SECRET ?? '', PUBLIC_URL: env.PUBLIC_URL || undefined, NOTEY_TOKEN_RATE_LIMIT: env.NOTEY_TOKEN_RATE_LIMIT },
 });
 
 export default getRequestListener((req) => {

@@ -44,7 +44,9 @@ function Login() {
       await api('/api/auth/sign-in/email', { body: { email: email.trim(), password } });
       // Drop the cached "signed out" result so the route guard fetches the new session.
       qc.removeQueries({ queryKey: keys.me });
-      await navigate({ to: next ?? '/' });
+      // A next with a query (the OAuth consent screen) needs a full load to keep its query.
+      if (next?.includes('?')) location.assign(next);
+      else await navigate({ to: next ?? '/' });
     } catch (err) {
       setPending(false);
       if (err instanceof ApiError && err.status === 401) setError("That email and password don't match.");

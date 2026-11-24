@@ -182,6 +182,29 @@ if (full) {
       const wrong = await call('PUT', `${W}/pages/${cv.json.page.id}/content`, { rev: 1, content: [{ type: 'paragraph' }] });
       expect(wrong.status === 400, `wrong type ${wrong.status}`);
     });
+    await check('M4: token → REST v1 and MCP, read scope, revoke, OAuth discovery', async () => {
+      const W = `/api/workspaces/${wsId}`;
+      const tok = await call('POST', `${W}/tokens`, { name: 'Smoke agent', scope: 'read' });
+      expect(tok.status === 201 && String(tok.json.secret).startsWith('ntk_'), `token ${tok.status}`);
+      const auth = { authorization: `Bearer ${tok.json.secret}` };
+      const v1 = await fetch(`${base}/api/v1/workspace`, { headers: auth });
+      const me = (await v1.json()) as { workspace?: { id: string } };
+      expect(v1.status === 200 && me.workspace?.id === wsId, `v1 ${v1.status}`);
+      const write = await fetch(`${base}/api/v1/tasks`, { method: 'POST', headers: { ...auth, 'content-type': 'application/json' }, body: '{"title":"x"}' });
+      expect(write.status === 403, `read token wrote: ${write.status}`);
+      const mcp = await fetch(`${base}/mcp`, {
+        method: 'POST',
+        headers: { ...auth, 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+      });
+      const tools = ((await mcp.json()) as { result?: { tools: { name: string }[] } }).result?.tools.map((t) => t.name) ?? [];
+      expect(mcp.status === 200 && tools.includes('read_page') && !tools.includes('update_page'), `mcp ${mcp.status} ${tools.join(',')}`);
+      await call('POST', `${W}/tokens/${tok.json.token.id}/revoke`, {});
+      expect((await fetch(`${base}/api/v1/workspace`, { headers: auth })).status === 401, 'revoked token still works');
+      const meta = (await (await fetch(`${base}/.well-known/oauth-authorization-server`)).json()) as { registration_endpoint?: string };
+      expect(!!meta.registration_endpoint?.endsWith('/oauth/register'), 'no OAuth metadata');
+      return `tools=${tools.length}`;
+    });
     await check('M1: upload, sniffed type, sandboxed serve', async () => {
       const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
       const form = new FormData();

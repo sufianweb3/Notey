@@ -125,3 +125,4 @@ git clone --depth 1 https://github.com/emilkowalski/skills /tmp/emil && cp -r /t
 | `DB` (binding), `FILES` (binding) | Cloudflare | D1 and R2 in `wrangler.jsonc` |
 | `DATA_DIR` | Node | defaults to `./data` |
 | `PUBLIC_URL` | all | used for OAuth redirects and MCP metadata |
+| `NOTEY_TOKEN_RATE_LIMIT` | all (optional) | requests per minute per API/MCP token, default 60 |

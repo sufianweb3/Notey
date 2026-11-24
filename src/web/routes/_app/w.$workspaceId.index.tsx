@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { FilePlus, FileText, FolderPlus, ListPlus } from 'lucide-react';
+import { FilePlus, FileText, FolderPlus, ListPlus, Plug } from 'lucide-react';
 import { useShell } from '@web/components/shell/app-shell';
 import { PinCard } from '@web/components/pins/pin-card';
 import { SkeletonRows } from '@web/components/shell/route-states';
@@ -87,6 +87,13 @@ function WorkspaceHome() {
                 <ListPlus className="size-4" strokeWidth={1.5} aria-hidden />
                 New task
               </Button>
+              <Link
+                to="/settings/ai-access"
+                className="inline-flex h-control items-center gap-2 rounded-md px-btn-x text-label font-medium text-on-surface-muted hover:bg-border/70 hover:text-on-surface"
+              >
+                <Plug className="size-4" strokeWidth={1.5} aria-hidden />
+                Connect an AI
+              </Link>
               {!tree.data?.projects.length && (
                 <Button variant="ghost" onClick={shell.newProject}>
                   <FolderPlus className="size-4" strokeWidth={1.5} aria-hidden />

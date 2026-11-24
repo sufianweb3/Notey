@@ -218,7 +218,15 @@ function PageView() {
       />
       {fullBleed ? (
         <>
-          <CompactTitle key={pageId} ws={ws} pageId={pageId} title={title} placeholder={p.type === 'canvas' ? 'Untitled canvas' : 'Untitled mindmap'} />
+          <CompactTitle
+            key={pageId}
+            ws={ws}
+            pageId={pageId}
+            title={title}
+            placeholder={p.type === 'canvas' ? 'Untitled canvas' : 'Untitled mindmap'}
+            editedBy={editedByLabel(node?.updatedBy ?? p.updatedBy)}
+            editedAt={node?.updatedAt ?? p.updatedAt}
+          />
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <Suspense fallback={<SkeletonRows rows={4} />}>
               {p.type === 'canvas' ? (
@@ -424,7 +432,22 @@ function savePageMeta(qc: ReturnType<typeof useQueryClient>, ws: string, pageId:
 }
 
 /** Title row for full-bleed pages (canvas, mindmap): one line, saves as you type. */
-function CompactTitle({ ws, pageId, title, placeholder }: { ws: string; pageId: string; title: string; placeholder: string }) {
+function CompactTitle({
+  ws,
+  pageId,
+  title,
+  placeholder,
+  editedBy,
+  editedAt,
+}: {
+  ws: string;
+  pageId: string;
+  title: string;
+  placeholder: string;
+  /** "Edited by Claude" after an agent edit (PRD 6.13). */
+  editedBy: string | null;
+  editedAt: string;
+}) {
   const qc = useQueryClient();
   const [value, setValue] = useState(title);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -456,6 +479,11 @@ function CompactTitle({ ws, pageId, title, placeholder }: { ws: string; pageId: 
         }}
         className="min-w-0 flex-1 bg-transparent text-h3 font-semibold text-on-surface outline-none placeholder:text-on-surface-subtle"
       />
+      {editedBy && (
+        <span className="hidden shrink-0 text-meta text-on-surface-subtle sm:inline">
+          {editedBy} · {relativeTime(editedAt)}
+        </span>
+      )}
     </div>
   );
 }

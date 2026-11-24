@@ -57,12 +57,12 @@ export function memoryStorage(): StorageAdapter {
   };
 }
 
-export async function makeApp() {
+export async function makeApp(extraEnv: { NOTEY_TOKEN_RATE_LIMIT?: string } = {}) {
   const db = await makeDb();
   const app = createApp({
     db,
     storage: memoryStorage(),
-    env: { NOTEY_SECRET: 'test-secret-'.padEnd(48, 'x'), PUBLIC_URL: ORIGIN },
+    env: { NOTEY_SECRET: 'test-secret-'.padEnd(48, 'x'), PUBLIC_URL: ORIGIN, ...extraEnv },
   });
   return { app, db };
 }
@@ -128,3 +128,37 @@ export const agent = (workspaceId: string, scope: 'read' | 'write' = 'write'): A
   workspaceId,
   scope,
 });
+
+/** A client for /api/v1 and /mcp that sends a bearer token and no cookies. */
+export function bearer(app: TestApp, token: string | null) {
+  async function call(method: string, path: string, body?: unknown, extra: Record<string, string> = {}) {
+    const headers: Record<string, string> = { ...extra };
+    if (token) headers.authorization = `Bearer ${token}`;
+    if (body !== undefined) headers['content-type'] = 'application/json';
+    const res = await app.request(`${ORIGIN}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = text;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { status: res.status, headers: res.headers, json: json as any };
+  }
+  let id = 0;
+  return {
+    get: (p: string) => call('GET', p),
+    post: (p: string, b?: unknown) => call('POST', p, b ?? {}),
+    patch: (p: string, b: unknown) => call('PATCH', p, b),
+    /** One MCP JSON-RPC request over Streamable HTTP (stateless, JSON responses). */
+    mcp: (method: string, params: Record<string, unknown> = {}) =>
+      call('POST', '/mcp', { jsonrpc: '2.0', id: ++id, method, params }, { accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-06-18' }),
+    /** tools/call, returning the first text block and whether it was an error. */
+    tool: async (name: string, args: Record<string, unknown> = {}) => {
+      const r = await call('POST', '/mcp', { jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { name, arguments: args } }, { accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-06-18' });
+      const result = r.json?.result;
+      return { status: r.status, isError: !!result?.isError, text: String(result?.content?.[0]?.text ?? ''), error: r.json?.error };
+    },
+  };
+}

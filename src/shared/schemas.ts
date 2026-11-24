@@ -277,3 +277,17 @@ export const sessionUserSchema = z.object({
   email: z.string(),
 });
 export type SessionUser = z.infer<typeof sessionUserSchema>;
+
+// ── M4: AI access (tokens, OAuth) ───────────────────────────────────────────
+export const tokenScopes = ['read', 'write'] as const;
+export type TokenScope = (typeof tokenScopes)[number];
+export const createTokenInput = z.object({ name: z.string().trim().min(1).max(60), scope: z.enum(tokenScopes) });
+export type TokenInfo = {
+  id: string;
+  name: string;
+  scope: TokenScope;
+  /** manual: made in Settings. oauth: a connected app (Claude.ai, ChatGPT). */
+  source: 'manual' | 'oauth';
+  lastUsedAt: string | null;
+  createdAt: string;
+};

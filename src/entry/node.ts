@@ -42,7 +42,7 @@ await client.execute('PRAGMA busy_timeout = 5000');
 const app = createApp({
   db: libsqlAdapter(client),
   storage: diskAdapter(join(DATA_DIR, 'files')),
-  env: { NOTEY_SECRET: loadSecret(), PUBLIC_URL: process.env.PUBLIC_URL || undefined },
+  env: { NOTEY_SECRET: loadSecret(), PUBLIC_URL: process.env.PUBLIC_URL || undefined, NOTEY_TOKEN_RATE_LIMIT: process.env.NOTEY_TOKEN_RATE_LIMIT },
 });
 
 const server = new Hono();

@@ -2,6 +2,8 @@
 export interface NoteyEnv {
   NOTEY_SECRET: string;
   PUBLIC_URL?: string;
+  /** Requests per minute per API/MCP token (default 60). */
+  NOTEY_TOKEN_RATE_LIMIT?: string;
 }
 
 export function assertEnv(env: Partial<NoteyEnv>): asserts env is NoteyEnv {

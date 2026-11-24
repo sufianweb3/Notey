@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { Workspace } from '@shared/schemas';
 import { SkeletonRows } from '@web/components/shell/route-states';
+import { SettingsNav } from '@web/components/shell/settings-nav';
 import { DeleteWorkspaceDialog, WorkspaceFormDialog } from '@web/components/shell/workspace-dialogs';
 import { Button } from '@web/components/ui/button';
 import { WorkspaceGlyph } from '@web/components/ui/glyph';
@@ -36,6 +37,9 @@ function WorkspaceSettings() {
           <p className="text-body text-on-surface-muted">
             Each workspace is sealed. Tokens and AI only ever see one at a time.
           </p>
+          <div className="pt-3">
+            <SettingsNav />
+          </div>
         </div>
         <Button variant="primary" onClick={() => setCreating(true)}>
           <Plus className="size-4" strokeWidth={1.5} aria-hidden />

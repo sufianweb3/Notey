@@ -243,6 +243,11 @@ export const apiToken = sqliteTable(
     lastUsedAt: text('last_used_at'),
     createdAt: text('created_at').notNull(),
     revokedAt: text('revoked_at'),
+    /** Rate limit (PRD 6.13): requests counted per one-minute window. */
+    rateWindow: integer('rate_window').notNull().default(0),
+    rateCount: integer('rate_count').notNull().default(0),
+    /** OAuth tokens: the app that holds it. */
+    clientId: text('client_id'),
   },
   (t) => [index('api_token_ws_idx').on(t.workspaceId)],
 );
@@ -263,6 +268,9 @@ export const oauthGrant = sqliteTable('oauth_grant', {
   scope: text('scope', { enum: ['read', 'write'] }).notNull(),
   codeHash: text('code_hash'),
   expiresAt: text('expires_at').notNull(),
+  /** The authorization request this code answers (OAuth 2.1 + PKCE). */
+  redirectUri: text('redirect_uri').notNull().default(''),
+  codeChallenge: text('code_challenge').notNull().default(''),
 });
 
 /*
