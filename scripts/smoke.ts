@@ -150,6 +150,23 @@ if (full) {
       const r = await call('POST', `${W}/trash/restore`, { kind: 'page', id });
       expect(r.status === 200, `restore ${r.status}`);
     });
+    await check('M2: repeating task completes to the next date, counts, pin', async () => {
+      const W = `/api/workspaces/${wsId}`;
+      const today = '2030-01-07'; // a Monday, so the result doesn't depend on the clock
+      const t = await call('POST', `${W}/tasks`, { title: 'Smoke standup', dueDate: today, rrule: 'FREQ=WEEKLY;BYDAY=MO,WE' });
+      expect(t.status === 201, `task ${t.status} ${t.text.slice(0, 120)}`);
+      const id = t.json.task.id;
+      const counts = await call('GET', `${W}/tasks/counts?today=${today}`);
+      expect(counts.json.today >= 1, `counts ${counts.text.slice(0, 120)}`);
+      const done = await call('POST', `${W}/tasks/${id}/complete`, { today });
+      expect(done.json.task?.dueDate === '2030-01-09' && done.json.task.status === 'todo', `complete ${done.text.slice(0, 160)}`);
+      const undo = await call('POST', `${W}/tasks/${id}/uncomplete`, {});
+      expect(undo.json.task?.dueDate === today, `uncomplete ${undo.text.slice(0, 160)}`);
+      const pin = await call('POST', `${W}/pins`, { itemType: 'task', itemId: id });
+      expect(pin.status === 201, `pin ${pin.status}`);
+      const pins = await call('GET', `${W}/pins`);
+      expect(pins.json.pins?.some((p: { itemId: string }) => p.itemId === id), 'pin not listed');
+    });
     await check('M1: upload, sniffed type, sandboxed serve', async () => {
       const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
       const form = new FormData();
