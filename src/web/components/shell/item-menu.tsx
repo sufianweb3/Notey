@@ -1,20 +1,22 @@
-import { ArrowRightLeft, Copy, Download, FilePlus, FolderPlus, Link2, Pencil, Star, Trash2 } from 'lucide-react';
+import { ArrowRightLeft, Copy, Download, FilePlus, FolderPlus, Link2, Pencil, Shapes, Star, Trash2, Workflow } from 'lucide-react';
 import { ContextMenu, DropdownMenu } from 'radix-ui';
 import type { ReactNode } from 'react';
 import type { ItemKind } from '@shared/schemas';
 import { cn } from '@web/lib/cn';
 import { modKey } from '@web/lib/workspace-memory';
 
-export type ItemAction = 'newPage' | 'newFolder' | 'rename' | 'duplicate' | 'move' | 'pin' | 'copyLink' | 'markdown' | 'delete';
+export type ItemAction = 'newPage' | 'newCanvas' | 'newMindmap' | 'newFolder' | 'rename' | 'duplicate' | 'move' | 'pin' | 'copyLink' | 'markdown' | 'delete';
 
 const ACTIONS: Record<ItemKind, ItemAction[][]> = {
-  project: [['newPage', 'newFolder'], ['rename', 'pin'], ['delete']],
-  folder: [['newPage', 'newFolder'], ['rename', 'move', 'pin'], ['delete']],
+  project: [['newPage', 'newCanvas', 'newMindmap', 'newFolder'], ['rename', 'pin'], ['delete']],
+  folder: [['newPage', 'newCanvas', 'newMindmap', 'newFolder'], ['rename', 'move', 'pin'], ['delete']],
   page: [['rename', 'duplicate', 'move', 'pin'], ['copyLink', 'markdown'], ['delete']],
 };
 
 const META: Record<ItemAction, { label: string; icon: ReactNode; hint?: string; danger?: boolean }> = {
-  newPage: { label: 'New page', icon: <FilePlus /> },
+  newPage: { label: 'New doc', icon: <FilePlus /> },
+  newCanvas: { label: 'New canvas', icon: <Shapes /> },
+  newMindmap: { label: 'New mindmap', icon: <Workflow /> },
   newFolder: { label: 'New folder', icon: <FolderPlus /> },
   rename: { label: 'Rename', icon: <Pencil />, hint: 'F2' },
   duplicate: { label: 'Duplicate', icon: <Copy /> },
@@ -34,6 +36,10 @@ export const menuItemClass = cn(
 
 type Prims = typeof ContextMenu | typeof DropdownMenu;
 type MenuProps = { kind: ItemKind; onAction: (a: ItemAction) => void; pinned?: boolean };
+type DropdownProps = MenuProps & {
+  /** Items specific to this page type, shown first (export, describe, outline). */
+  extra?: { label: string; icon: ReactNode; onSelect: () => void }[];
+};
 
 function Items({ P, kind, onAction, pinned }: MenuProps & { P: Prims }) {
   return ACTIONS[kind].map((group, gi) => (
@@ -68,10 +74,21 @@ export function ItemContextMenu({ children, ...props }: MenuProps & { children: 
   );
 }
 
-export function ItemDropdownContent(props: MenuProps) {
+export function ItemDropdownContent({ extra, ...props }: DropdownProps) {
   return (
     <DropdownMenu.Portal>
       <DropdownMenu.Content className={menuContentClass} align="start" sideOffset={4} collisionPadding={8}>
+        {extra?.length ? (
+          <>
+            {extra.map((x) => (
+              <DropdownMenu.Item key={x.label} className={menuItemClass} onSelect={x.onSelect}>
+                <span className="text-on-surface-muted">{x.icon}</span>
+                <span className="flex-1">{x.label}</span>
+              </DropdownMenu.Item>
+            ))}
+            <DropdownMenu.Separator className="my-1 h-hairline bg-border" />
+          </>
+        ) : null}
         <Items P={DropdownMenu} {...props} />
       </DropdownMenu.Content>
     </DropdownMenu.Portal>

@@ -6,6 +6,7 @@ import type {
   MoveInput,
   PageDetail,
   PageNode,
+  PageType,
   ProjectNode,
   SearchHit,
   TrashItem,
@@ -84,7 +85,7 @@ export function useContentMutations(ws: string) {
       onSuccess: refreshTree,
     }),
     createPage: useMutation({
-      mutationFn: (input: { projectId: string; folderId?: string | null; title?: string }) =>
+      mutationFn: (input: { projectId: string; folderId?: string | null; title?: string; type?: PageType }) =>
         api<{ page: PageDetail }>(`${base(ws)}/pages`, { body: { type: 'doc', title: '', ...input } }),
       onSuccess: ({ page }) => {
         qc.setQueryData(ck.page(ws, page.id), page);

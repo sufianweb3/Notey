@@ -1,10 +1,9 @@
 import { and, desc, eq } from 'drizzle-orm';
-import type { Block } from '../../shared/blocks';
 import { nowIso, uuidv7 } from '../../shared/ids';
 import type { VersionDetail, VersionSummary } from '../../shared/schemas';
 import { page, pageVersion } from '../db/schema';
 import type { DbAdapter } from '../db/types';
-import { pageMarkdown } from './tasks';
+import { contentMarkdown } from './markdown';
 import { logChange } from './changelog';
 import { assertLiveWorkspace, livePage, pageDetailDto } from './content';
 import { actorLabel, assertCanWrite, ServiceError, type WsCtx } from './context';
@@ -80,10 +79,10 @@ async function findVersion(a: DbAdapter, ctx: WsCtx, pageId: string, versionId: 
 
 export async function getVersion(a: DbAdapter, ctx: WsCtx, pageId: string, versionId: string): Promise<VersionDetail> {
   await assertLiveWorkspace(a, ctx);
-  await livePage(a, ctx, pageId);
+  const p = await livePage(a, ctx, pageId);
   const row = await findVersion(a, ctx, pageId, versionId);
-  const content = row.contentJson ? (JSON.parse(row.contentJson) as Block[]) : null;
-  return { ...summary(row), content, contentMd: await pageMarkdown(a, ctx.workspaceId, content) };
+  const content: unknown = row.contentJson ? JSON.parse(row.contentJson) : null;
+  return { ...summary(row), type: p.type, content, contentMd: await contentMarkdown(a, ctx.workspaceId, p.type, content) };
 }
 
 export async function createSnapshot(a: DbAdapter, ctx: WsCtx, pageId: string): Promise<VersionSummary> {
@@ -99,7 +98,7 @@ export async function restoreVersion(a: DbAdapter, ctx: WsCtx, pageId: string, v
   const current = await livePage(a, ctx, pageId);
   const v = await findVersion(a, ctx, pageId, versionId);
   await snapshot(a, ctx, current, 'before restore');
-  const contentMd = v.contentJson ? await pageMarkdown(a, ctx.workspaceId, JSON.parse(v.contentJson) as Block[]) : '';
+  const contentMd = v.contentJson ? await contentMarkdown(a, ctx.workspaceId, current.type, JSON.parse(v.contentJson)) : '';
   const patch = {
     title: v.title,
     contentJson: v.contentJson,

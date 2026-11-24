@@ -1,4 +1,5 @@
 import { PAGE_LINK_SCHEME, type Block, type InlineContent, type StyledText, type TableContent } from '../../shared/blocks';
+import { chartToMarkdown, type ChartKind } from '../../shared/chart';
 
 /*
  * Block JSON → Markdown. Runs on every save (page.content_md) and is what
@@ -132,7 +133,11 @@ function indent(text: string, by: string): string {
 const LIST_TYPES = new Set(['bulletListItem', 'numberedListItem', 'checkListItem', 'toggleListItem', 'task']);
 
 /** Live data some blocks point at, e.g. the task behind a task block. */
-export type MdContext = { tasks?: Map<string, { title: string; done: boolean }> };
+export type MdContext = {
+  tasks?: Map<string, { title: string; done: boolean }>;
+  /** Titles of embedded pages. */
+  pages?: Map<string, string>;
+};
 
 function blockToMd(block: Block, ordinal: number, ctx: MdContext): string {
   const p = block.props ?? {};
@@ -188,10 +193,21 @@ function blockToMd(block: Block, ordinal: number, ctx: MdContext): string {
       const t = ctx.tasks?.get(String(p.taskId ?? ''));
       return t ? `- [${t.done ? 'x' : ' '}] ${escapeText(t.title)}` : '';
     }
+    case 'chart':
+      return fence(
+        chartToMarkdown({ kind: (p.kind as ChartKind) ?? 'bar', title: String(p.title ?? ''), highlight: String(p.highlight ?? ''), data: String(p.data ?? '') }),
+        'chart',
+      );
+    case 'pageEmbed': {
+      // A canvas or mindmap shown inside a doc. Image syntax keeps it a block on the way back in.
+      if (!p.pageId) return '';
+      const title = ctx.pages?.get(String(p.pageId)) ?? '';
+      return `![${title.replace(/[[\]]/g, '')}](${PAGE_LINK_SCHEME}${String(p.pageId)})`;
+    }
     case 'pageBreak':
       return '---';
     default:
-      // Unknown or future block types (canvas embed, chart, task): keep their text.
+      // Unknown or future block types: keep their text.
       return body ? lines(body) : '';
   }
 }

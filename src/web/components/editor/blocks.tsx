@@ -125,7 +125,7 @@ export const MathBlock = createReactBlockSpec(
         if (draft !== block.props.latex) editor.updateBlock(block, { props: { latex: draft } });
       };
       return (
-        <div className="notey-embed w-full" contentEditable={false}>
+        <div className="notey-embed w-full" contentEditable={false} data-editing={editing || undefined}>
           <button type="button" className="block w-full overflow-x-auto py-2 text-left" onClick={() => setEditing(true)} aria-label="Edit equation">
             {html ? <span dangerouslySetInnerHTML={{ __html: html }} /> : <span className="text-meta text-on-surface-subtle">Loading equation…</span>}
           </button>
@@ -213,7 +213,7 @@ export const MermaidBlock = createReactBlockSpec(
         if (draft !== block.props.code) editor.updateBlock(block, { props: { code: draft } });
       };
       return (
-        <div className="notey-embed w-full" contentEditable={false}>
+        <div className="notey-embed w-full" contentEditable={false} data-editing={editing || undefined}>
           <button type="button" className="block w-full overflow-x-auto py-2 text-left" onClick={() => setEditing(true)} aria-label="Edit diagram">
             {svg ? (
               // securityLevel 'strict' sanitizes Mermaid's SVG output.

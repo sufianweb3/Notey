@@ -7,6 +7,8 @@ import {
   defaultInlineContentSpecs,
 } from '@blocknote/core';
 import { Callout, InlineMath, MathBlock, MermaidBlock, PageLink } from './blocks';
+import { ChartBlock } from './chart-block';
+import { PageEmbedBlock } from './embed-block';
 import { TaskBlock } from './task-block';
 
 // PRD 6.3 block set: no video or audio blocks, headings H1–H3 only.
@@ -22,6 +24,8 @@ export const schema = BlockNoteSchema.create({
     math: MathBlock(),
     mermaid: MermaidBlock(),
     task: TaskBlock(),
+    chart: ChartBlock(),
+    pageEmbed: PageEmbedBlock(),
   },
   inlineContentSpecs: {
     ...defaultInlineContentSpecs,

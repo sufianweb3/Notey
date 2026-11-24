@@ -137,7 +137,7 @@ Notey is a daily, all-day tool for one person: docs, tasks, whiteboards and mind
 - **Status:** error, warning and success always come with an icon or a word. Never color alone.
 - **Links in docs:** `on-surface` with a 1 px underline at `border-strong`. Hover thickens the underline. No blue.
 - **Text colors in the editor** (user-applied): gray, olive (`accent-ink`), amber (`warning`), red (`error`). Background highlights: `accent-wash` and a neutral gray wash. That's it.
-- **Charts:** charcoal, `on-surface-muted`, `border-strong` and lime for the highlighted series. Max 4 series. Pie charts use charcoal shades plus lime for one slice.
+- **Charts:** charcoal, `on-surface-muted`, `border-strong` and lime for the highlighted series. Max 4 series. Pie charts use charcoal shades plus lime for one slice. With no highlight, a fourth series takes the lime; a pie with no highlight lights its largest slice.
 - **Theme:** System (default) / Light / Dark. Increased contrast (`prefers-contrast: more`): borders move to `border-strong`, muted text moves to `on-surface`.
 - **Gradients:** none. Glass: only the mobile bottom tab bar and the collapsed-sidebar peek panel may use `backdrop-filter`. Solid under `prefers-reduced-transparency`.
 
@@ -235,7 +235,11 @@ Fevgo / Website / Homepage brief                ☆  ⋯   ✦ AI
 
 **Important:** sections for Pages, Tasks, Folders and Projects. Cards for pages, rows for tasks. Drag to reorder. Empty state: "Pin anything with ☆ to keep it here."
 
-**Canvas / Mindmap:** full-bleed. The top bar stays, and a floating toolbar sits at the bottom center (Excalidraw's toolbar re-skinned). Paper `surface`, ink `on-surface`, grid dots at `border`.
+**Canvas / Mindmap:** full-bleed. The top bar stays, with a one-line title row under it. Paper `surface`, ink `on-surface`, grid dots at `border`.
+
+- **Canvas** keeps Excalidraw's own toolbar (top centre, bottom on phones), re-skinned with tokens in `src/web/components/canvas/canvas.css`: islands `surface-raised`, menus `surface-overlay`, hover `neutral`, borders `border`, selected tool `accent-wash`, primary `primary`, UI font Inter. Excalidraw's hand-drawn fonts stay for drawings. Scene colours are document data, stored as literals (`SCENE` in `src/web/lib/excalidraw.ts`) and inverted by Excalidraw in dark mode. A sticky note is a borderless `accent-wash` rectangle with ink text, added from the button at the top right. Excalidraw's promo and social menu items are hidden.
+- **Mindmap** has a floating toolbar at the bottom centre: add inside, add next, remove, layout (Left to right / Radial; one icon below 600 px), fit. Central idea: `primary` fill, `on-primary` text, `radius-lg`. First ring: `surface-raised` with a `border` ring. Deeper ideas: text on `surface`. Selected: the focus ring. Drop target while dragging: `accent-wash`. Edges `border-strong` at 1.5 px. Fold buttons sit on the node's outer edge and show how many ideas they hide.
+- **Embeds in docs:** a card (level 1) with the page's icon, title and "Open canvas" / "Open mindmap", over a read-only picture of it. Clicking opens the page.
 
 ## Elevation & Depth
 
@@ -366,7 +370,6 @@ No gradients or glow for AI. Under reduced motion, the pulse becomes static text
 ## Known Gaps
 
 - No increased-contrast palette values yet beyond the border/text rules above.
-- Excalidraw theme mapping (colors, fonts, toolbar re-skin) to be finalized in M3.
 - App icon and favicon not designed yet (start: charcoal rounded square, lime "N").
 - Print stylesheet for PDF export to be defined in M6.
 - Editor colour picker maps BlockNote's colour names to the four allowed text colours (gray, green → olive `accent-ink`, orange → amber `warning`, red → `error`) and two highlights (yellow → `accent-wash`, gray wash). The mapping lives in `src/web/components/editor/editor.css`.

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Command } from 'cmdk';
-import { CircleCheck, FilePlus, FileText, FolderPlus, Home, Keyboard, ListPlus, PanelLeft, Search, SquareCheck, Star, SunMoon, Trash2 } from 'lucide-react';
+import { CircleCheck, FilePlus, FileText, FolderPlus, Home, Keyboard, ListPlus, PanelLeft, Search, Shapes, SquareCheck, Star, SunMoon, Trash2, Workflow } from 'lucide-react';
 import { Dialog as D } from 'radix-ui';
 import { Fragment, useDeferredValue, useEffect, useState, type ReactNode } from 'react';
-import type { SearchHit, Workspace } from '@shared/schemas';
+import type { PageType, SearchHit, Workspace } from '@shared/schemas';
 import { WorkspaceGlyph } from '@web/components/ui/glyph';
 import { cn } from '@web/lib/cn';
 import { pageTitle, searchQuery, treeQuery } from '@web/lib/content';
@@ -12,7 +12,7 @@ import { openTask } from '@web/lib/tasks';
 import { modKey } from '@web/lib/workspace-memory';
 
 export type CommandActions = {
-  newPage: () => void;
+  newPage: (type?: PageType) => void;
   newProject: () => void;
   newTask: () => void;
   toggleSidebar: () => void;
@@ -117,7 +117,9 @@ function MenuBody({ close, ws, workspaces, actions }: Omit<MenuProps, 'open' | '
   const projectName = (id: string | null) => (id ? (tree?.projects.find((p) => p.id === id)?.name ?? '') : 'Inbox');
 
   const commands: { value: string; label: string; icon: ReactNode; hint?: string; fn: () => void }[] = [
-    { value: 'new doc page', label: 'New doc', icon: <FilePlus />, hint: `${modKey}N`, fn: actions.newPage },
+    { value: 'new doc page', label: 'New doc', icon: <FilePlus />, hint: `${modKey}N`, fn: () => actions.newPage('doc') },
+    { value: 'new canvas whiteboard drawing', label: 'New canvas', icon: <Shapes />, fn: () => actions.newPage('canvas') },
+    { value: 'new mindmap mind map ideas', label: 'New mindmap', icon: <Workflow />, fn: () => actions.newPage('mindmap') },
     { value: 'new task todo', label: 'New task', icon: <ListPlus />, hint: 'T', fn: actions.newTask },
     { value: 'new project', label: 'New project', icon: <FolderPlus />, fn: actions.newProject },
     ...(ws

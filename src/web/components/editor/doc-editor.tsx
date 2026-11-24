@@ -21,11 +21,11 @@ import {
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import { useQueryClient } from '@tanstack/react-query';
-import { FileText, Info, ListChecks, Network, Palette, Sigma, SquareFunction } from 'lucide-react';
+import { ChartColumn, FileText, Info, ListChecks, Network, Palette, Shapes, Sigma, SquareFunction, Workflow } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { Block } from '@shared/blocks';
-import type { FileInfo, PageDetail, Tree } from '@shared/schemas';
+import type { PageDetail, Tree } from '@shared/schemas';
 import { looksLikeMarkdown, markdownToBlocks } from '../../../server/md/md-to-blocks';
 import { Button } from '@web/components/ui/button';
 import { Dialog } from '@web/components/ui/dialog';
@@ -33,6 +33,7 @@ import { api, ApiError } from '@web/lib/api';
 import { base, ck, pageTitle } from '@web/lib/content';
 import { PAGE_CHANGED, type PageChangedDetail } from '@web/lib/live';
 import { useResolvedTheme } from '@web/lib/prefs';
+import { upload } from '@web/lib/upload';
 import { schema, type NoteyEditor, type NoteyPartialBlock } from './schema';
 
 export type SaveState = 'saved' | 'saving' | 'error' | 'offline';
@@ -40,19 +41,6 @@ export type EditorHandle = { load: (page: PageDetail) => void; focusStart: () =>
 
 const DEBOUNCE_MS = 600;
 const QUIET_MS = 2_500; // no typing for this long = safe to apply a remote edit in place
-
-async function upload(ws: string, file: File): Promise<string> {
-  const form = new FormData();
-  form.append('file', file);
-  const res = await fetch(`${base(ws)}/files`, { method: 'POST', body: form, credentials: 'same-origin' });
-  const json = (await res.json().catch(() => null)) as { file?: FileInfo; error?: { message: string } } | null;
-  if (!res.ok || !json?.file) {
-    const msg = json?.error?.message ?? "Couldn't upload the file. Try again.";
-    toast.error(msg);
-    throw new Error(msg);
-  }
-  return json.file.url;
-}
 
 // ── Slash menu ──────────────────────────────────────────────────────────────
 
@@ -105,10 +93,34 @@ function slashItems(editor: NoteyEditor): DefaultReactSuggestionItem[] {
     {
       title: 'Mermaid diagram',
       subtext: 'Flowcharts and sequence diagrams from text',
-      aliases: ['mermaid', 'diagram', 'flowchart', 'chart', 'sequence'],
+      aliases: ['mermaid', 'diagram', 'flowchart', 'sequence'],
       group: 'Advanced',
       icon: <Network size={18} strokeWidth={1.5} />,
       onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'mermaid' }),
+    },
+    {
+      title: 'Chart',
+      subtext: 'Bar, line, area or pie from a small table',
+      aliases: ['chart', 'graph', 'bar', 'line', 'pie', 'area', 'plot'],
+      group: 'Media',
+      icon: <ChartColumn size={18} strokeWidth={1.5} />,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'chart' }),
+    },
+    {
+      title: 'Canvas',
+      subtext: 'Embed a whiteboard, new or existing',
+      aliases: ['canvas', 'whiteboard', 'drawing', 'excalidraw', 'sketch', 'embed'],
+      group: 'Media',
+      icon: <Shapes size={18} strokeWidth={1.5} />,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'pageEmbed', props: { kind: 'canvas' } }),
+    },
+    {
+      title: 'Mindmap',
+      subtext: 'Embed a mindmap, new or existing',
+      aliases: ['mindmap', 'mind map', 'ideas', 'tree', 'embed'],
+      group: 'Media',
+      icon: <Workflow size={18} strokeWidth={1.5} />,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'pageEmbed', props: { kind: 'mindmap' } }),
     },
   ];
   // Keep BlockNote's grouping; ours slot into Basic and Advanced.
@@ -208,7 +220,7 @@ const DocEditor = forwardRef<EditorHandle, Props>(function DocEditor({ ws, page,
   const editor = useCreateBlockNote(
     {
       schema,
-      initialContent: page.content?.length ? (page.content as NoteyPartialBlock[]) : undefined,
+      initialContent: Array.isArray(page.content) && page.content.length ? (page.content as NoteyPartialBlock[]) : undefined,
       uploadFile: (file) => upload(ws, file),
       pasteHandler: ({ event, editor, defaultPasteHandler }) => {
         const text = event.clipboardData?.getData('text/plain') ?? '';
@@ -311,7 +323,7 @@ const DocEditor = forwardRef<EditorHandle, Props>(function DocEditor({ ws, page,
   function load(next: PageDetail) {
     applyingRemote.current = true;
     try {
-      const blocks = (next.content?.length ? next.content : [{ type: 'paragraph' }]) as NoteyPartialBlock[];
+      const blocks = (Array.isArray(next.content) && next.content.length ? next.content : [{ type: 'paragraph' }]) as NoteyPartialBlock[];
       editor.replaceBlocks(editor.document, blocks);
     } finally {
       applyingRemote.current = false;

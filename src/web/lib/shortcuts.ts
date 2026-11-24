@@ -5,7 +5,9 @@ import { isMac } from './workspace-memory';
 export function isTyping(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   if (!el) return false;
-  return el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName);
+  if (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+  // Canvas and mindmap use single keys for their own tools.
+  return !!el.closest?.('[data-own-keys]');
 }
 
 export const mod = (e: KeyboardEvent | React.KeyboardEvent) => (isMac ? e.metaKey : e.ctrlKey);
@@ -48,7 +50,21 @@ export function useShortcuts(bindings: Binding[]) {
         return;
       }
     }
+    // Canvas and mindmap claim keys for their own tools (Excalidraw takes ⌘K
+    // for links). App-wide ⌘ combos go first there, before the engine sees them.
+    function onKeyFirst(e: KeyboardEvent) {
+      if (e.isComposing || !mod(e) || !(e.target as HTMLElement | null)?.closest?.('[data-own-keys]')) return;
+      const b = ref.current.find((x) => x.combo.includes('mod') && x.whileTyping !== false && matches(x.combo, e));
+      if (!b) return;
+      e.preventDefault();
+      e.stopPropagation();
+      b.handler(e);
+    }
+    window.addEventListener('keydown', onKeyFirst, true);
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKeyFirst, true);
+      window.removeEventListener('keydown', onKey);
+    };
   }, []);
 }

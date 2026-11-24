@@ -230,6 +230,11 @@
   box-shadow: inset 0 0 0 2px var(--color-primary);
   border-radius: var(--radius-lg);
 }
+/* A block whose own editor is open (chart data, LaTeX, Mermaid) isn't shown as selected. */
+.notey-editor .bn-block-content.ProseMirror-selectednode:has([data-editing]) > ::after,
+.notey-editor .ProseMirror-selectednode > .bn-block-content:has([data-editing]) > ::after {
+  display: none;
+}
 .notey-editor .bn-inline-content .ProseMirror-selectednode::after {
   background-color: var(--color-accent-wash);
   box-shadow: none;

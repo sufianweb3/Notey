@@ -1,0 +1,86 @@
+/*
+ * Excalidraw re-skinned with Notey tokens (DESIGN.md § Canvas).
+ * Excalidraw defines its own --color-primary, --color-on-surface and
+ * --color-surface-* on .excalidraw, so our values cross over through --n-*
+ * names resolved one level up, where ours are still in scope.
+ */
+.notey-canvas {
+  --n-ink: var(--color-primary);
+  --n-ink-hover: var(--color-primary-hover);
+  --n-text: var(--color-on-surface);
+  --n-text-muted: var(--color-on-surface-muted);
+  --n-surface: var(--color-surface);
+  --n-raised: var(--color-surface-raised);
+  --n-overlay: var(--color-surface-overlay);
+  --n-neutral: var(--color-neutral);
+  --n-border: var(--color-border);
+  --n-wash: var(--color-accent-wash);
+  --n-radius: var(--radius-lg);
+  --n-shadow: var(--shadow-2);
+}
+
+.notey-canvas .excalidraw,
+.notey-canvas .excalidraw.theme--dark {
+  --ui-font: var(--font-sans);
+  --color-primary: var(--n-ink);
+  --color-primary-darker: var(--n-ink-hover);
+  --color-primary-darkest: var(--n-ink-hover);
+  --color-primary-hover: var(--n-ink-hover);
+  --color-primary-light: var(--n-wash);
+  --color-primary-light-darker: var(--n-wash);
+  --color-brand-hover: var(--n-ink-hover);
+  --color-brand-active: var(--n-ink);
+  --color-surface-primary-container: var(--n-wash);
+  --color-on-primary-container: var(--n-text);
+  --color-on-surface: var(--n-text);
+  --text-primary-color: var(--n-text);
+  --icon-fill-color: var(--n-text);
+  --keybinding-color: var(--n-text-muted);
+  --island-bg-color: var(--n-raised);
+  --popup-bg-color: var(--n-overlay);
+  --sidebar-bg-color: var(--n-raised);
+  --default-bg-color: var(--n-surface);
+  --input-bg-color: var(--n-raised);
+  --input-border-color: var(--n-border);
+  --input-hover-bg-color: var(--n-neutral);
+  --color-surface-high: var(--n-neutral);
+  --color-surface-mid: var(--n-neutral);
+  --color-surface-low: var(--n-raised);
+  --color-surface-lowest: var(--n-surface);
+  --button-hover-bg: var(--n-neutral);
+  --button-active-bg: var(--n-neutral);
+  --default-border-color: var(--n-border);
+  --sidebar-border-color: var(--n-border);
+  --dialog-border-color: var(--n-border);
+  --border-radius-lg: var(--n-radius);
+  --shadow-island: var(--n-shadow), 0 0 0 var(--spacing-hairline) var(--n-border);
+  --link-color: var(--n-text);
+}
+
+/* Excalidraw's promo links and social buttons have no place in a self-hosted app. */
+.notey-canvas .excalidraw .welcome-screen-menu-item--promo,
+.notey-canvas .excalidraw .dropdown-menu-item--socials {
+  display: none;
+}
+
+.notey-canvas-sticky {
+  display: grid;
+  place-items: center;
+  width: var(--lg-button-size);
+  height: var(--lg-button-size);
+  border-radius: var(--border-radius-lg);
+  background: var(--island-bg-color);
+  box-shadow: var(--shadow-island);
+  color: var(--icon-fill-color);
+}
+.notey-canvas-sticky:hover {
+  background: var(--button-hover-bg);
+}
+.notey-canvas-sticky:focus-visible {
+  outline: calc(var(--spacing-1) / 2) solid var(--n-ink);
+  outline-offset: calc(var(--spacing-1) / 2);
+}
+.notey-canvas-sticky svg {
+  width: var(--lg-icon-size);
+  height: var(--lg-icon-size);
+}

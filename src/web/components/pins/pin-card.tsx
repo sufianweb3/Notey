@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import { FileText, Folder, Layers, Shapes, Workflow, ListChecks } from 'lucide-react';
+import { Folder, Layers } from 'lucide-react';
 import type { PinItem } from '@shared/schemas';
 import { cn } from '@web/lib/cn';
 import { relativeTime, editedByLabel } from '@web/lib/time';
 
-const PAGE_ICONS = { doc: FileText, canvas: Shapes, mindmap: Workflow, tasklist: ListChecks } as const;
+import { PAGE_ICONS } from '@web/lib/page-icons';
 
 function Glyph({ pin }: { pin: PinItem }) {
   if (pin.icon) return <span className="text-h3 leading-none">{pin.icon}</span>;

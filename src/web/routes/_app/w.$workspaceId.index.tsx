@@ -79,7 +79,7 @@ function WorkspaceHome() {
               {tree.data?.projects.length ? 'Write a page or capture a task.' : 'Pages live in projects. Your first doc creates one.'}
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="primary" onClick={shell.newPage}>
+              <Button variant="primary" onClick={() => shell.newPage('doc')}>
                 <FilePlus className="size-4" strokeWidth={1.5} aria-hidden />
                 New doc
               </Button>

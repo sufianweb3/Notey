@@ -1,3 +1,4 @@
+import { chartFromMarkdown } from '../../shared/chart';
 import { Marked, type TokenizerAndRendererExtension, type Token, type Tokens } from 'marked';
 import {
   PAGE_LINK_SCHEME,
@@ -178,6 +179,7 @@ function paragraphBlocks(tokens: Token[] | undefined): Block[] {
   const meaningful = (tokens ?? []).filter((t) => !(t.type === 'text' && !(t as Tokens.Text).text.trim()));
   if (meaningful.length === 1 && meaningful[0]!.type === 'image') {
     const img = meaningful[0] as Tokens.Image;
+    if (img.href.startsWith(PAGE_LINK_SCHEME)) return [{ type: 'pageEmbed', props: { pageId: img.href.slice(PAGE_LINK_SCHEME.length) } }];
     return [{ type: 'image', props: { url: img.href, caption: img.text ?? '', name: img.text ?? '' } }];
   }
   const content = trimInline(inline(tokens));
@@ -282,6 +284,7 @@ function tokenToBlocks(t: Token): Block[] {
       const c = t as Tokens.Code;
       const lang = normalizeLanguage(c.lang);
       if (lang === 'mermaid') return [{ type: 'mermaid', props: { code: c.text } }];
+      if (lang === 'chart') return [{ type: 'chart', props: chartFromMarkdown(c.text) }];
       if (lang === 'math' || lang === 'latex' || lang === 'tex' || lang === 'katex') {
         return [{ type: 'math', props: { latex: c.text.trim() } }];
       }

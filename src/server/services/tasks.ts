@@ -5,11 +5,13 @@ import { addDays, formatRRule, nextOccurrence, parseRRule, RRuleError, weekday, 
 import type { CreateTaskInput, Task, TaskCounts, TaskKind, TaskView, UpdateTaskInput } from '../../shared/schemas';
 import { page, task, taskCompletion } from '../db/schema';
 import type { DbAdapter } from '../db/types';
-import { blocksToMarkdown } from '../md/blocks-to-md';
 import { logChange } from './changelog';
 import { assertLiveWorkspace, livePage, liveProject } from './content';
 import { actorLabel, assertCanWrite, ServiceError, type WsCtx } from './context';
 import { indexItem, unindex } from './search';
+import { pageMarkdown } from './markdown';
+
+export { pageMarkdown };
 
 type TaskRow = typeof task.$inferSelect;
 
@@ -70,25 +72,6 @@ async function index(a: DbAdapter, t: TaskRow) {
 }
 
 // ── Markdown for pages that hold task blocks (rule 6) ───────────────────────
-
-function taskBlockIds(blocks: Block[], out: string[] = []): string[] {
-  for (const b of blocks) {
-    if (b.type === 'task' && typeof b.props?.taskId === 'string') out.push(b.props.taskId);
-    if (b.children?.length) taskBlockIds(b.children, out);
-  }
-  return out;
-}
-
-/** Page Markdown with task blocks resolved to their live title and state. */
-export async function pageMarkdown(a: DbAdapter, workspaceId: string, blocks: Block[] | null): Promise<string> {
-  const ids = blocks ? [...new Set(taskBlockIds(blocks))] : [];
-  if (!ids.length) return blocksToMarkdown(blocks);
-  const rows = await a.db
-    .select({ id: task.id, title: task.title, status: task.status })
-    .from(task)
-    .where(and(eq(task.workspaceId, workspaceId), inArray(task.id, ids), isNull(task.deletedAt)));
-  return blocksToMarkdown(blocks, { tasks: new Map(rows.map((r) => [r.id, { title: r.title, done: r.status === 'done' }])) });
-}
 
 /** After a task changes, the page showing it as a block gets fresh Markdown (no new rev). */
 async function refreshHostPage(a: DbAdapter, ctx: WsCtx, pageId: string | null) {

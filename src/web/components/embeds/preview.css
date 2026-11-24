@@ -1,0 +1,34 @@
+/* Static mindmap picture: same look as the live mindmap, no interaction. */
+.notey-mind-preview path,
+.notey-mind-preview line {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+}
+.notey-mind-preview rect {
+  fill: var(--color-surface);
+}
+.notey-mind-preview g[data-depth='1'] rect {
+  fill: var(--color-surface-raised);
+  stroke: var(--color-border);
+}
+.notey-mind-preview g[data-depth='0'] rect {
+  fill: var(--color-primary);
+}
+.notey-mind-preview-text {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 var(--spacing-3);
+  overflow: hidden;
+  color: var(--color-on-surface);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: var(--spacing-5);
+  overflow-wrap: anywhere;
+}
+.notey-mind-preview g[data-depth='0'] .notey-mind-preview-text {
+  color: var(--color-on-primary);
+  font-size: var(--text-body-doc);
+  font-weight: 600;
+}

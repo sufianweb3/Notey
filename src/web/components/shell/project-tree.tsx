@@ -12,11 +12,12 @@ import {
 } from '@dnd-kit/core';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { ChevronRight, Ellipsis, FileText, Folder, Layers, Plus } from 'lucide-react';
+import { ChevronRight, Ellipsis, Folder, Layers, Plus } from 'lucide-react';
+import { PAGE_ICONS } from '@web/lib/page-icons';
 import { DropdownMenu } from 'radix-ui';
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { toast } from 'sonner';
-import type { ItemKind, MoveInput, Tree } from '@shared/schemas';
+import type { ItemKind, MoveInput, PageType, Tree } from '@shared/schemas';
 import { Button } from '@web/components/ui/button';
 import { errorMessage } from '@web/lib/api';
 import { cn } from '@web/lib/cn';
@@ -33,6 +34,7 @@ type Row = {
   key: string;
   label: string;
   icon: string | null;
+  pageType?: PageType;
   depth: number;
   parent: string | null;
   projectId: string;
@@ -61,7 +63,7 @@ function buildRows(tree: Tree, open: Set<string>): Row[] {
     }
     for (const p of pages) {
       const ref: NodeRef = { kind: 'page', id: p.id };
-      rows.push({ ref, key: keyOf(ref), label: pageTitle(p), icon: p.icon, depth, parent, projectId, containerId: folderId, expandable: false, expanded: false, posInSet: ++pos, setSize: size });
+      rows.push({ ref, key: keyOf(ref), label: pageTitle(p), icon: p.icon, pageType: p.type, depth, parent, projectId, containerId: folderId, expandable: false, expanded: false, posInSet: ++pos, setSize: size });
     }
   };
   tree.projects.forEach((p, i) => {
@@ -171,9 +173,9 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
     rowEls.current.get(key)?.focus();
   };
 
-  async function newPage(projectId: string, folderId: string | null) {
+  async function newPage(projectId: string, folderId: string | null, type: PageType = 'doc') {
     try {
-      const { page } = await m.createPage.mutateAsync({ projectId, folderId });
+      const { page } = await m.createPage.mutateAsync({ projectId, folderId, type });
       if (folderId) setOpen(`folder:${folderId}`, true);
       void navigate({ to: '/w/$workspaceId/p/$pageId', params: { workspaceId: ws, pageId: page.id } });
       onNavigate?.();
@@ -200,6 +202,10 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
     switch (action) {
       case 'newPage':
         return void newPage(row.projectId, containerFolder);
+      case 'newCanvas':
+        return void newPage(row.projectId, containerFolder, 'canvas');
+      case 'newMindmap':
+        return void newPage(row.projectId, containerFolder, 'mindmap');
       case 'newFolder':
         return setNaming({ kind: 'folder', projectId: row.projectId, parentId: containerFolder });
       case 'rename':
@@ -434,7 +440,7 @@ export function ProjectTree({ ws, onNavigate }: { ws: string; onNavigate?: () =>
 
 function RowIcon({ row }: { row: Row }) {
   if (row.icon) return <span className="grid size-4 shrink-0 place-items-center text-meta leading-none">{row.icon}</span>;
-  const Icon = row.ref.kind === 'project' ? Layers : row.ref.kind === 'folder' ? Folder : FileText;
+  const Icon = row.ref.kind === 'project' ? Layers : row.ref.kind === 'folder' ? Folder : PAGE_ICONS[row.pageType ?? 'doc'];
   return <Icon className="size-4 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />;
 }
 

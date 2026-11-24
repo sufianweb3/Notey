@@ -4,7 +4,7 @@ import { House, Layers, PanelLeft, PanelLeftClose, Search, Settings, SquareCheck
 import { Dialog as D, Tooltip } from 'radix-ui';
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import type { Workspace } from '@shared/schemas';
+import type { PageType, Workspace } from '@shared/schemas';
 import { errorMessage } from '@web/lib/api';
 import { cn } from '@web/lib/cn';
 import { treeQuery, useContentMutations } from '@web/lib/content';
@@ -23,7 +23,7 @@ import { ProjectTree } from './project-tree';
 import { ShortcutSheet } from './shortcut-sheet';
 import { WorkspaceSwitcher } from './workspace-switcher';
 
-type ShellActions = { openSearch: () => void; newPage: () => void; newProject: () => void; newTask: () => void };
+type ShellActions = { openSearch: () => void; newPage: (type?: PageType) => void; newProject: () => void; newTask: () => void };
 const ShellContext = createContext<ShellActions>({ openSearch: () => {}, newPage: () => {}, newProject: () => {}, newTask: () => {} });
 /** Shell-level actions (search, new page, new project, new task) for screens inside the shell. */
 export const useShell = () => useContext(ShellContext);
@@ -211,13 +211,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     setPeek(false);
   };
 
-  async function newPage() {
+  async function newPage(type: PageType = 'doc') {
     if (!ws) return;
     const currentPage = tree?.pages.find((p) => p.id === params.pageId);
     const projectId = currentPage?.projectId ?? tree?.projects[0]?.id;
     if (!projectId) return setNewProjectThenPage(true);
     try {
-      const { page } = await m.createPage.mutateAsync({ projectId, folderId: currentPage?.folderId ?? null });
+      const { page } = await m.createPage.mutateAsync({ projectId, folderId: currentPage?.folderId ?? null, type });
       void navigate({ to: '/w/$workspaceId/p/$pageId', params: { workspaceId: ws, pageId: page.id } });
     } catch (err) {
       toast.error(errorMessage(err));
@@ -259,7 +259,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <ShellContext.Provider
-      value={{ openSearch: () => setCmdOpen(true), newPage: () => void newPage(), newProject: () => setNewProjectThenPage(true), newTask: () => setQuickAdd(true) }}
+      value={{ openSearch: () => setCmdOpen(true), newPage: (type) => void newPage(type), newProject: () => setNewProjectThenPage(true), newTask: () => setQuickAdd(true) }}
     >
     <Tooltip.Provider>
       <div className="flex h-dvh overflow-hidden bg-neutral">
@@ -383,7 +383,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ws={ws}
         workspaces={workspaces}
         actions={{
-          newPage: () => void newPage(),
+          newPage: (type) => void newPage(type),
           newTask: () => setQuickAdd(true),
           newProject: () => setNewProjectThenPage(true),
           toggleSidebar,

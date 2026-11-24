@@ -12,6 +12,7 @@ import { base, ck, versionQuery, versionsQuery } from '@web/lib/content';
 import { relativeTime } from '@web/lib/time';
 
 const DocPreview = lazy(() => import('./doc-editor').then((m) => ({ default: m.DocPreview })));
+const ContentPreview = lazy(() => import('@web/components/embeds/content-preview'));
 
 const REASONS: Record<string, string> = {
   autosave: 'Autosaved',
@@ -110,7 +111,11 @@ export function HistorySheet({
                   <p role="alert" className="text-body text-error">
                     {errorMessage(detail.error)}
                   </p>
-                ) : detail.data.content?.length ? (
+                ) : detail.data.type !== 'doc' && detail.data.content ? (
+                  <Suspense fallback={<SkeletonRows rows={4} />}>
+                    <ContentPreview type={detail.data.type} content={detail.data.content} />
+                  </Suspense>
+                ) : Array.isArray(detail.data.content) && detail.data.content.length ? (
                   <Suspense fallback={<SkeletonRows rows={4} />}>
                     <DocPreview content={detail.data.content as Block[]} />
                   </Suspense>

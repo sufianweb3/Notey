@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ownAddress } from './ip';
 
 const OWNER = { name: 'Nadia Rahman', email: 'nadia@example.com', password: 'correct horse battery' };
 
 async function signIn(page: Page) {
+  await ownAddress(page);
   await page.goto('/');
   await page.waitForURL(/\/(setup|login|w\/)/);
   if (page.url().includes('/setup')) {

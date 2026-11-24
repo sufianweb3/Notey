@@ -364,7 +364,22 @@ Hono app (one codebase)
 - The "Connect an AI" starter card on Home waits for M4, where it has something to connect to.
 - BlockNote's "Toggle heading" slash items are hidden: Markdown has no toggle heading, so they wouldn't round-trip.
 
+**M3 (2026-11-24)**
+- **Mindmap layout uses `d3-hierarchy` (ISC), not elkjs.** elkjs is EPL-2.0 or GPL-3.0, which isn't on the allowed list. React Flow is pinned to 12.x (the latest 13 changed its change-event API). Its attribution badge is hidden, which its MIT license allows.
+- **Content per page type.** A canvas stores Excalidraw's scene (`kind: 'canvas'`, elements, file references); a mindmap stores one tree (`kind: 'mindmap'`, layout, root). The save endpoint checks that content fits the page's type. `content_md` is an outline for a mindmap and a text description for a canvas ("Sticky note: “Call Rafi”", "Arrow from “Idea” to “Ship”"), so search and AI read both. The same description is the canvas's text alternative (⋯ → Describe canvas).
+- **Canvas images** are uploaded to workspace file storage; the scene keeps only `/api/workspaces/<this workspace>/files/<id>` URLs, and the server refuses any other URL, so a scene can't make the browser fetch from elsewhere or reach another workspace's files.
+- **Excalidraw's fonts are served from our own origin** (`/excalidraw-assets/`, copied at build), never its CDN. They're OFL-1.1, like the open question on Inter below; they ship as part of the MIT Excalidraw package. Excalidraw's AI features are off.
+- **Two tabs drawing at once** merge element by element (Excalidraw's `reconcileElements`, newest version wins) instead of showing the conflict bar. Deleted elements are kept a day so a merge can't bring them back. Mindmaps use the doc's conflict bar (Reload / Keep mine).
+- **Mindmap keys:** Tab adds an idea inside, Enter one next to it, F2 or typing edits, Space folds, Delete removes (the central idea stays), arrows move, ⌘Z / ⌘⇧Z undo and redo. Esc keeps what you typed, except after typing over an idea, where it puts the old text back. An idea left empty right after adding it goes away. Pasting several lines adds them as branches. While the page has no title, the central idea names it. "Replace from outline…" and "Copy as outline" are in the ⋯ menu.
+- **Outline format:** `# Central idea` then nested `- ` bullets. Headings nest too, so an AI chat's "## Section / - point" outline becomes a mindmap as pasted. Several top-level items get a root named after the page.
+- **Chart block** keeps its data as CSV in the block; Markdown is a ```` ```chart ```` fence with `type:`, `title:` and `highlight:` lines, then the CSV, so it round-trips. The editor is a small grid; pasting cells from a spreadsheet fills it. Each chart also carries its numbers as a hidden table for screen readers.
+- **Embeds:** `/Canvas` and `/Mindmap` insert an embed that picks an existing page or makes a new one next to the doc. In Markdown an embed is `![Title](notey://page/<id>)`, which reads back as an embed. A rename of the embedded page reaches the doc's Markdown on the doc's next save.
+- **Tables** keep BlockNote's table block (header row, column alignment, alignment round-trips through Markdown). Charts don't read tables yet.
+- App-wide ⌘ shortcuts (⌘K, ⌘N, ⌘\\, ⌘⇧P) win over the canvas and mindmap; their single-key tools (T for text on a canvas) don't trigger app shortcuts.
+- e2e: each test signs in from its own test address (`TRUST_PROXY=1` on the e2e server only), so the sign-in rate limit stays on.
+
 ## 14. Open questions
 
 - **Fonts:** Inter and JetBrains Mono are licensed OFL-1.1, which isn't on the CLAUDE.md allowed list (MIT, MPL-2.0, Apache-2.0, ISC). M0 names them in the font stack but bundles no font files, so browsers fall back to the system UI font. Allow OFL for fonts, or pick a font under an allowed license?
+- **elkjs comes in through Mermaid** (Mermaid 12 depends on it for one layout). It's EPL-2.0 or GPL-3.0. It isn't imported by Notey's own code, but it's in the dependency tree. Accept it as part of Mermaid, or pin a Mermaid build without it?
 - Should a workspace be exportable and importable into another install (moving a client workspace between servers)? Not in V1 unless you say so.

@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNull, max } from 'drizzle-orm';
-import type { Block } from '../../shared/blocks';
+import type { CanvasContent } from '../../shared/canvas';
+import { countNodes, depthOf, MINDMAP_MAX_DEPTH, MINDMAP_MAX_NODES, type MindmapContent } from '../../shared/mindmap';
 import { nowIso, uuidv7 } from '../../shared/ids';
 import {
   MAX_CONTENT_BYTES,
@@ -13,7 +14,7 @@ import {
 } from '../../shared/schemas';
 import { folder, page, project, workspace } from '../db/schema';
 import type { DbAdapter } from '../db/types';
-import { pageMarkdown } from './tasks';
+import { contentMarkdown } from './markdown';
 import { logChange } from './changelog';
 import { actorLabel, assertCanWrite, assertWorkspaceAccess, ServiceError, type WsCtx } from './context';
 import { indexPage } from './search';
@@ -87,7 +88,7 @@ const pageNodeDto = (r: Pick<PageRow, keyof PageNode>): PageNode => ({
 export function pageDetailDto(r: PageRow): PageDetail {
   return {
     ...pageNodeDto(r),
-    content: r.contentJson ? (JSON.parse(r.contentJson) as unknown[]) : null,
+    content: r.contentJson ? (JSON.parse(r.contentJson) as unknown) : null,
     contentMd: r.contentMd,
     rev: r.rev,
     createdAt: r.createdAt,
@@ -229,7 +230,7 @@ export async function renameFolder(a: DbAdapter, ctx: WsCtx, id: string, name: s
 export async function createPage(
   a: DbAdapter,
   ctx: WsCtx,
-  input: { projectId: string; folderId?: string | null; type: PageType; title: string; content?: Block[] },
+  input: { projectId: string; folderId?: string | null; type: PageType; title: string; content?: unknown },
 ): Promise<PageDetail> {
   await assertLiveWorkspace(a, ctx);
   assertCanWrite(ctx);
@@ -239,6 +240,7 @@ export async function createPage(
     const f = await liveFolder(a, ctx, folderId);
     if (f.projectId !== input.projectId) throw new ServiceError('invalid', 'The folder is in another project');
   }
+  if (input.content != null) assertContentFits(ctx, input.type, input.content);
   const now = nowIso();
   const who = actorLabel(ctx.actor);
   const row: PageRow = {
@@ -250,8 +252,8 @@ export async function createPage(
     type: input.type,
     title: input.title,
     icon: null,
-    contentJson: input.content ? JSON.stringify(input.content) : null,
-    contentMd: input.content ? await pageMarkdown(a, ctx.workspaceId, input.content) : '',
+    contentJson: input.content != null ? JSON.stringify(input.content) : null,
+    contentMd: await contentMarkdown(a, ctx.workspaceId, input.type, input.content ?? null),
     rev: 0,
     createdBy: who,
     updatedBy: who,
@@ -290,6 +292,36 @@ export async function updatePageMeta(
 }
 
 /**
+ * Content must match the page type: blocks for a doc, a scene for a canvas,
+ * a tree for a mindmap. Canvas images must be this workspace's own files,
+ * so a scene can't make the browser fetch from anywhere else.
+ */
+function assertContentFits(ctx: WsCtx, type: PageType, content: unknown) {
+  const wrong = () => new ServiceError('invalid', `That content doesn't fit a ${type} page.`);
+  if (type === 'doc') {
+    if (!Array.isArray(content)) throw wrong();
+    return;
+  }
+  const kind = content && typeof content === 'object' && !Array.isArray(content) ? (content as { kind?: unknown }).kind : undefined;
+  if (type === 'canvas') {
+    if (kind !== 'canvas') throw wrong();
+    const prefix = `/api/workspaces/${ctx.workspaceId}/files/`;
+    for (const f of Object.values((content as CanvasContent).files ?? {})) {
+      if (!f.url.startsWith(prefix) || f.url.includes('..')) throw new ServiceError('invalid', 'Canvas images must be files in this workspace.');
+    }
+    return;
+  }
+  if (type === 'mindmap') {
+    if (kind !== 'mindmap') throw wrong();
+    const root = (content as MindmapContent).root;
+    if (countNodes(root) > MINDMAP_MAX_NODES) throw new ServiceError('invalid', `A mindmap can have up to ${MINDMAP_MAX_NODES} nodes.`);
+    if (depthOf(root) > MINDMAP_MAX_DEPTH) throw new ServiceError('invalid', `A mindmap can be up to ${MINDMAP_MAX_DEPTH} levels deep.`);
+    return;
+  }
+  throw wrong();
+}
+
+/**
  * Saves the document. `rev` must match the stored rev or the save is
  * rejected with 409 and the current rev (PRD §8 conflict rule).
  * content_md is regenerated here, on the server, on every save.
@@ -298,13 +330,14 @@ export async function savePageContent(
   a: DbAdapter,
   ctx: WsCtx,
   id: string,
-  input: { rev: number; content: Block[] },
+  input: { rev: number; content: unknown },
 ): Promise<{ rev: number; updatedAt: string; contentMd: string }> {
   await assertLiveWorkspace(a, ctx);
   assertCanWrite(ctx);
   const json = JSON.stringify(input.content);
   if (json.length > MAX_CONTENT_BYTES) throw new ServiceError('invalid', 'This page is too large to save (over 2 MB).');
   const current = await livePage(a, ctx, id);
+  assertContentFits(ctx, current.type, input.content);
   if (current.rev !== input.rev) {
     throw new ServiceError('conflict', 'This page changed somewhere else.', {
       rev: current.rev,
@@ -314,7 +347,7 @@ export async function savePageContent(
   }
   // Agents always snapshot first (rule 4); the owner every 5 minutes of activity.
   await snapshotIfDue(a, ctx, current, ctx.actor.kind === 'agent' ? 'before agent edit' : 'autosave', ctx.actor.kind === 'agent');
-  const contentMd = await pageMarkdown(a, ctx.workspaceId, input.content);
+  const contentMd = await contentMarkdown(a, ctx.workspaceId, current.type, input.content);
   const updatedAt = nowIso();
   const res = await a.run(
     `UPDATE page SET content_json = ?, content_md = ?, rev = rev + 1, updated_at = ?, updated_by = ?
@@ -339,7 +372,7 @@ export async function duplicatePage(a: DbAdapter, ctx: WsCtx, id: string): Promi
     folderId: src.folderId,
     type: src.type,
     title: src.title ? `${src.title} (copy)` : '',
-    content: src.contentJson ? (JSON.parse(src.contentJson) as Block[]) : undefined,
+    content: src.contentJson ? (JSON.parse(src.contentJson) as unknown) : undefined,
   });
   // Place the copy right after the original.
   await moveItem(a, ctx, {

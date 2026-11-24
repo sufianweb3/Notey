@@ -99,6 +99,7 @@ export function client(app: TestApp, ip = '203.0.113.7') {
     get: (p: string) => call('GET', p),
     post: (p: string, b?: unknown) => call('POST', p, b ?? {}),
     patch: (p: string, b: unknown) => call('PATCH', p, b),
+    put: (p: string, b: unknown) => call('PUT', p, b),
     signOut: () => {
       cookie = '';
     },

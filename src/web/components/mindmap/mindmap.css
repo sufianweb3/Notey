@@ -1,0 +1,225 @@
+/* Mindmap (DESIGN.md § Canvas / Mindmap): full bleed, paper surface, dots at border. */
+.notey-mindmap {
+  background: var(--color-surface);
+}
+.notey-mindmap:focus-visible {
+  outline: calc(var(--spacing-1) / 2) solid var(--color-primary);
+  outline-offset: calc(var(--spacing-1) / -2);
+}
+.notey-mindmap .react-flow__edge-path {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5;
+}
+.notey-mindmap .react-flow__handle {
+  width: var(--spacing-hairline);
+  height: var(--spacing-hairline);
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.notey-mind-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: var(--spacing-5);
+  cursor: default;
+  transition: box-shadow var(--duration-micro) var(--ease-out), background-color var(--duration-micro) var(--ease-out);
+}
+.notey-mind-node[data-depth='1'] {
+  background: var(--color-surface-raised);
+  box-shadow: inset 0 0 0 var(--spacing-hairline) var(--color-border);
+}
+.notey-mind-node[data-root] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--text-body-doc);
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2) var(--spacing-btn-x);
+}
+.notey-mind-node[data-selected] {
+  box-shadow: 0 0 0 calc(var(--spacing-1) / 2) var(--color-surface), 0 0 0 var(--spacing-1) var(--color-primary);
+}
+.notey-mind-node[data-depth='1'][data-selected] {
+  box-shadow: inset 0 0 0 var(--spacing-hairline) var(--color-border), 0 0 0 calc(var(--spacing-1) / 2) var(--color-surface), 0 0 0 var(--spacing-1) var(--color-primary);
+}
+.notey-mind-node[data-drop] {
+  background: var(--color-accent-wash);
+  box-shadow: inset 0 0 0 var(--spacing-hairline) var(--color-border-strong);
+}
+.react-flow__node.dragging .notey-mind-node {
+  box-shadow: var(--shadow-2), inset 0 0 0 var(--spacing-hairline) var(--color-border);
+  cursor: grabbing;
+}
+
+.notey-mind-editor {
+  position: absolute;
+  z-index: 4;
+  transform-origin: 0 0;
+}
+
+.notey-mind-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.notey-mind-placeholder {
+  color: var(--color-on-surface-subtle);
+}
+.notey-mind-node[data-root] .notey-mind-placeholder {
+  color: color-mix(in oklab, var(--color-on-primary) 65%, transparent);
+}
+.notey-mind-input {
+  width: 100%;
+  resize: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  field-sizing: content;
+  outline: none;
+}
+
+.notey-mind-fold {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--spacing-5) / -2 - var(--spacing-hairline));
+  display: grid;
+  place-items: center;
+  min-width: var(--spacing-5);
+  height: var(--spacing-5);
+  padding: 0 var(--spacing-1);
+  translate: 0 -50%;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-raised);
+  box-shadow: inset 0 0 0 var(--spacing-hairline) var(--color-border-strong);
+  color: var(--color-on-surface-muted);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity var(--duration-micro) var(--ease-out);
+}
+.notey-mind-fold svg {
+  width: var(--spacing-3);
+  height: var(--spacing-3);
+  rotate: 180deg;
+}
+.notey-mind-fold[data-collapsed],
+.notey-mind-node:hover .notey-mind-fold,
+.notey-mind-node[data-selected] .notey-mind-fold {
+  opacity: 1;
+}
+@media (hover: none) {
+  .notey-mind-fold {
+    opacity: 1;
+  }
+}
+
+.notey-mind-toolbar {
+  position: absolute;
+  bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-1) / 2);
+  max-width: calc(100% - var(--spacing-8));
+  overflow-x: auto;
+  padding: var(--spacing-1);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-2), inset 0 0 0 var(--spacing-hairline) var(--color-border);
+}
+.notey-mind-tool {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--spacing-input);
+  height: var(--spacing-input);
+  border-radius: var(--radius-md);
+  color: var(--color-on-surface);
+}
+.notey-mind-tool svg {
+  width: calc(var(--spacing-4) + var(--spacing-1) / 2);
+  height: calc(var(--spacing-4) + var(--spacing-1) / 2);
+}
+.notey-mind-tool:hover:not(:disabled) {
+  background: var(--color-neutral);
+}
+.notey-mind-tool:disabled {
+  color: var(--color-on-surface-subtle);
+}
+.notey-mind-sep {
+  flex: none;
+  width: var(--spacing-hairline);
+  height: var(--spacing-5);
+  margin: 0 var(--spacing-1);
+  background: var(--color-border);
+}
+.notey-mind-segment {
+  display: flex;
+  flex: none;
+  gap: calc(var(--spacing-1) / 2);
+  padding: calc(var(--spacing-1) / 2);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral);
+}
+.notey-mind-segment button {
+  height: var(--spacing-8);
+  padding: 0 var(--spacing-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-surface-muted);
+  font-size: var(--text-label);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.notey-mind-segment button[aria-checked='true'] {
+  background: var(--color-surface-raised);
+  color: var(--color-on-surface);
+  box-shadow: inset 0 0 0 var(--spacing-hairline) var(--color-border);
+}
+.notey-mind-toolbar button:focus-visible {
+  outline: calc(var(--spacing-1) / 2) solid var(--color-primary);
+  outline-offset: var(--spacing-hairline);
+}
+@media (pointer: coarse) {
+  .notey-mind-tool {
+    width: var(--spacing-topbar);
+    height: var(--spacing-topbar);
+  }
+  .notey-mind-segment button {
+    height: var(--spacing-10);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notey-mind-node,
+  .notey-mind-fold {
+    transition: none;
+  }
+}
+
+/* Below 600 px the layout switch is one icon button, so the toolbar fits a phone. */
+.notey-mind-compact {
+  display: none;
+}
+@media (max-width: 599px) {
+  .notey-mind-segment {
+    display: none;
+  }
+  .notey-mind-compact {
+    display: contents;
+  }
+}

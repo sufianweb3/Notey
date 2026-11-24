@@ -74,8 +74,11 @@ export type PageNode = {
 export type Tree = { projects: ProjectNode[]; folders: FolderNode[]; pages: PageNode[] };
 
 export type PageDetail = PageNode & {
-  /** BlockNote document JSON (see shared/blocks.ts), null for a new page. */
-  content: unknown[] | null;
+  /**
+   * Doc: BlockNote document JSON (shared/blocks.ts). Canvas: CanvasContent
+   * (shared/canvas.ts). Mindmap: MindmapContent (shared/mindmap.ts). Null for a new page.
+   */
+  content: unknown;
   contentMd: string;
   rev: number;
   createdAt: string;
@@ -109,9 +112,29 @@ export const updatePageInput = z
 
 /** Block JSON is capped at 2 MB so one save can't exhaust a Worker. */
 export const MAX_CONTENT_BYTES = 2_000_000;
+export const docContent = z.array(z.looseObject({ type: z.string() })).max(20_000);
+export const canvasContent = z.object({
+  kind: z.literal('canvas'),
+  elements: z.array(z.looseObject({ id: z.string().min(1).max(64), type: z.string().min(1).max(32) })).max(20_000),
+  files: z.record(z.string().min(1).max(64), z.object({ mimeType: z.string().max(100), url: z.string().max(300) })).default({}),
+});
+type MindNodeShape = { id: string; text: string; collapsed?: boolean; children: MindNodeShape[] };
+const mindNodeSchema: z.ZodType<MindNodeShape> = z.lazy(() =>
+  z.object({
+    id: z.string().min(1).max(64),
+    text: z.string().max(2_000),
+    collapsed: z.boolean().optional(),
+    children: z.array(mindNodeSchema).max(1_000),
+  }),
+);
+export const mindmapContent = z.object({
+  kind: z.literal('mindmap'),
+  layout: z.enum(['right', 'radial']).default('right'),
+  root: mindNodeSchema,
+});
 export const saveContentInput = z.object({
   rev: z.number().int().min(0),
-  content: z.array(z.looseObject({ type: z.string() })).max(20_000),
+  content: z.union([docContent, canvasContent, mindmapContent]),
 });
 
 export const itemKinds = ['project', 'folder', 'page'] as const;
@@ -148,7 +171,7 @@ export type TrashItem = {
 };
 
 export type VersionSummary = { id: string; rev: number; title: string; author: string; reason: string; createdAt: string };
-export type VersionDetail = VersionSummary & { content: unknown[] | null; contentMd: string };
+export type VersionDetail = VersionSummary & { type: PageType; content: unknown; contentMd: string };
 
 export type SearchHit = {
   kind: 'page' | 'task';
