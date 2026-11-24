@@ -167,6 +167,21 @@ if (full) {
       const pins = await call('GET', `${W}/pins`);
       expect(pins.json.pins?.some((p: { itemId: string }) => p.itemId === id), 'pin not listed');
     });
+    await check('M3: mindmap outline, canvas description, content fits its page type', async () => {
+      const W = `/api/workspaces/${wsId}`;
+      const p = await call('POST', `${W}/projects`, { name: 'Smoke M3' });
+      const projectId = p.json.project.id;
+      const mm = await call('POST', `${W}/pages`, { projectId, type: 'mindmap', title: 'Smoke map' });
+      const tree = { kind: 'mindmap', layout: 'right', root: { id: 'r', text: 'Launch', children: [{ id: 'a', text: 'Website', children: [] }] } };
+      const savedMm = await call('PUT', `${W}/pages/${mm.json.page.id}/content`, { rev: 0, content: tree });
+      expect(savedMm.json.contentMd === '# Launch\n\n- Website\n', `mindmap ${savedMm.status} ${savedMm.text.slice(0, 120)}`);
+      const cv = await call('POST', `${W}/pages`, { projectId, type: 'canvas', title: 'Smoke canvas' });
+      const scene = { kind: 'canvas', files: {}, elements: [{ id: 's', type: 'rectangle', customData: { notey: 'sticky' } }, { id: 't', type: 'text', text: 'Quokka plan', containerId: 's' }] };
+      const savedCv = await call('PUT', `${W}/pages/${cv.json.page.id}/content`, { rev: 0, content: scene });
+      expect(String(savedCv.json.contentMd).includes('Sticky note: “Quokka plan”'), `canvas ${savedCv.status} ${savedCv.text.slice(0, 120)}`);
+      const wrong = await call('PUT', `${W}/pages/${cv.json.page.id}/content`, { rev: 1, content: [{ type: 'paragraph' }] });
+      expect(wrong.status === 400, `wrong type ${wrong.status}`);
+    });
     await check('M1: upload, sniffed type, sandboxed serve', async () => {
       const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
       const form = new FormData();
