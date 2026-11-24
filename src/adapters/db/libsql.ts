@@ -1,5 +1,7 @@
 import type { Client, InValue } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
+// The web entry only imports the pure-JS client, so bundles never pull in native libSQL;
+// it still accepts any client instance (the Node entry passes the native one).
+import { drizzle } from 'drizzle-orm/libsql/web';
 import * as schema from '../../server/db/schema';
 import type { DbAdapter } from '../../server/db/types';
 
